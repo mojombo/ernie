@@ -1,2 +1,2 @@
-{application, smoke_server_app,
-  [{mod, {smoke_server_app, []}}]}.
+{application, ernie_server_app,
+  [{mod, {ernie_server_app, []}}]}.

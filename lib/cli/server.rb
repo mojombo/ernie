@@ -20,6 +20,12 @@ OptionParser.new do |opts|
 end.parse!
 
 command = ARGV[0]
+handler = ARGV[1]
+
+unless handler
+  puts "A handler must be specified: ernie /path/to/handler.rb"
+  exit(1)
+end
 
 name = options[:name] || DEFAULT_NODE_NAME
 port = options[:port] || 8000
@@ -36,6 +42,7 @@ cmd = %Q{erl -boot start_sasl \
              #{pidfile} \
              -setcookie #{cookie_hash(name)} \
              -ernie_server_app port #{port} \
+             -ernie_server_app handler '"#{handler}"' \
              -run ernie_server_app boot}.squeeze(' ')
 puts cmd
 exec(cmd)

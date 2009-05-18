@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 %% api
--export([start_link/1, start/1, rpc/1, test/0]).
+-export([start_link/1, start/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -32,10 +32,10 @@ start(Args) ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init(Port) ->
+init([Port, Handler]) ->
   process_flag(trap_exit, true),
   error_logger:info_msg("~p starting~n", [?MODULE]),
-  Ducky = port_wrapper:wrap("ducky"),
+  Ducky = port_wrapper:wrap(Handler),
   {ok, LSock} = try_listen(Port, 500),
   spawn(fun() -> loop(LSock, Ducky) end),
   {ok, #state{lsock = LSock, ducky = Ducky}}.
