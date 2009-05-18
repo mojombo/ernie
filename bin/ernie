@@ -28,10 +28,50 @@ end
 require 'optparse'
 require 'pp'
 
-begin
-  ARGV[0] ? command = ARGV[0].downcase : (raise "No command provided")
-  CMD_LINE_COMMANDS.include?(command) ? (require command) : (raise "Invalid command")
-rescue => error
-  puts "#{error.message}! Valid commands for ernie are:\n#{CMD_LINE_COMMANDS.sort.join(", ")}"
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: ernie [options] <handler>"
+
+  opts.on("-n NAME", "--name NAME", "Node name") do |x|
+    options[:name] = x
+  end
+
+  opts.on("-p PORT", "--port PORT", "Port") do |x|
+    options[:port] = x
+  end
+
+  opts.on("-d", "--detached", "Run as a daemon") do
+    options[:detached] = true
+  end
+
+  opts.on("-P", "--pidfile PIDFILE", "Location to write pid file.") do |x|
+    options[:pidfile] = x
+  end
+end.parse!
+
+handler = ARGV[0]
+
+unless handler
+  puts "A handler must be specified: ernie /path/to/handler.rb"
   exit(1)
 end
+
+name = options[:name] || DEFAULT_NODE_NAME
+port = options[:port] || 8000
+pidfile = options[:pidfile] ? "-ernie_server_app pidfile \"'#{options[:pidfile]}'\"" : ''
+detached = options[:detached] ? '-detached' : ''
+
+cmd = %Q{erl -boot start_sasl \
+             #{detached} \
+             +Bc \
+             +K true \
+             -smp enable \
+             #{code_paths}
+             -name '#{name}' \
+             #{pidfile} \
+             -setcookie #{cookie_hash(name)} \
+             -ernie_server_app port #{port} \
+             -ernie_server_app handler '"#{handler}"' \
+             -run ernie_server_app boot}.squeeze(' ')
+puts cmd
+exec(cmd)
