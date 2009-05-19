@@ -22,6 +22,36 @@ Installation
     gem install mojombo-ernie -s http://gems.github.com
 
 
+Running
+-------
+
+    Usage: ernie [options] <handler>
+        -n, --name NAME                  Node name
+        -p, --port PORT                  Port
+        -d, --detached                   Run as a daemon
+        -P, --pidfile PIDFILE            Location to write pid file.
+
+
+Example Handler
+---------------
+
+    require 'ernie'
+    
+    mod(:calc) do
+      fun(:add) do |a, b|
+        a + b
+      end
+    end
+
+
+Example BERT-RPC call for above example
+---------------------------------------
+
+    -> {call, calc, add, [1, 2]}
+    
+    <- {reply, 3}
+
+
 Contribute
 ----------
 

@@ -28,9 +28,18 @@ end
 require 'optparse'
 require 'pp'
 
+help = <<HELP
+Ernie is an Erlang/Ruby BERT-RPC Server.
+
+Basic Command Line Usage:
+  ernie [options] <path to handler file>
+
+Options:
+HELP
+
 options = {}
 OptionParser.new do |opts|
-  opts.banner = "Usage: ernie [options] <handler>"
+  opts.banner = help
 
   opts.on("-n NAME", "--name NAME", "Node name") do |x|
     options[:name] = x
