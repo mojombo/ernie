@@ -1,21 +1,9 @@
 #!/usr/bin/env ruby
 
-require 'digest/md5'
-
 $:.unshift(File.join(File.dirname(__FILE__), *%w[.. lib]))
 ERNIE_ROOT = File.join(File.dirname(__FILE__), *%w[..])
 
-CMD_LINE_PATH = File.join(ERNIE_ROOT, *%w[lib cli])
-CMD_LINE_COMMANDS = Dir[CMD_LINE_PATH + "/*.rb"].map { |fname| File.basename(fname).split(".")[0].downcase }
-$:.unshift(CMD_LINE_PATH)
-
-DEFAULT_NODE_NAME = `hostname -s`.chomp + "-#{rand(9999)}"
-DEFAULT_MASTER_NODE = "master@solid.local"
 DEFAULT_ERLANG_CODEPATHS = %w[ebin]
-
-def cookie_hash(node)
-  Digest::MD5.hexdigest(node  + "-ernie")
-end
 
 def rel(path)
   File.join(ERNIE_ROOT, path)
@@ -41,10 +29,6 @@ options = {}
 OptionParser.new do |opts|
   opts.banner = help
 
-  opts.on("-n NAME", "--name NAME", "Node name") do |x|
-    options[:name] = x
-  end
-
   opts.on("-p PORT", "--port PORT", "Port") do |x|
     options[:port] = x
   end
@@ -65,7 +49,6 @@ unless handler
   exit(1)
 end
 
-name = options[:name] || DEFAULT_NODE_NAME
 port = options[:port] || 8000
 pidfile = options[:pidfile] ? "-ernie_server_app pidfile \"'#{options[:pidfile]}'\"" : ''
 detached = options[:detached] ? '-detached' : ''
@@ -76,9 +59,7 @@ cmd = %Q{erl -boot start_sasl \
              +K true \
              -smp enable \
              #{code_paths}
-             -name '#{name}' \
              #{pidfile} \
-             -setcookie #{cookie_hash(name)} \
              -ernie_server_app port #{port} \
              -ernie_server_app handler '"#{handler}"' \
              -run ernie_server_app boot}.squeeze(' ')
