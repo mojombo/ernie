@@ -17,6 +17,8 @@ Ernie is a BERT-RPC server implementation that uses an Erlang server to accept i
 Installation
 ------------
 
+  You must have Erlang installed before installing Ernie.
+
     gem install mojombo-ernie -s http://gems.github.com
 
 
