@@ -35,7 +35,7 @@ start(Args) ->
 init([Port, Handler]) ->
   process_flag(trap_exit, true),
   error_logger:info_msg("~p starting~n", [?MODULE]),
-  Ducky = port_wrapper:wrap(Handler),
+  Ducky = port_wrapper:wrap("ruby " ++ Handler),
   {ok, LSock} = try_listen(Port, 500),
   spawn(fun() -> loop(LSock, Ducky) end),
   {ok, #state{lsock = LSock, ducky = Ducky}}.

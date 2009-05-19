@@ -8,3 +8,5 @@ require 'ernie'
 
 class Test::Unit::TestCase
 end
+
+$test = true
