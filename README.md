@@ -52,6 +52,18 @@ Example BERT-RPC call for above example
     <- {reply, 3}
 
 
+Using the BERTRPC gem to make calls to Ernie
+--------------------------------------------
+
+You can make BERT-RPC calls from Ruby with the [BERTRPC gem](http://github.com/mojombo/bertrpc):
+
+    require 'bertrpc'
+    
+    svc = BERTRPC::Service.new('localhost', 8000)
+    svc.calc.add.call(1, 2)
+    # => 3
+
+
 Contribute
 ----------
 
