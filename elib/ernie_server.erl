@@ -9,6 +9,7 @@
          terminate/2, code_change/3]).
 
 -record(state, {lsock = undefined,
+                handler = undefined,
                 ducky = undefined}).
 
 %%====================================================================
@@ -35,10 +36,10 @@ start(Args) ->
 init([Port, Handler]) ->
   process_flag(trap_exit, true),
   error_logger:info_msg("~p starting~n", [?MODULE]),
-  Ducky = port_wrapper:wrap("ruby " ++ Handler),
+  Ducky = port_wrapper:wrap_link("ruby " ++ Handler),
   {ok, LSock} = try_listen(Port, 500),
   spawn(fun() -> loop(LSock, Ducky) end),
-  {ok, #state{lsock = LSock, ducky = Ducky}}.
+  {ok, #state{lsock = LSock, handler = Handler, ducky = Ducky}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -60,6 +61,11 @@ handle_call(_Request, _From, State) ->
 %%--------------------------------------------------------------------
 handle_cast(_Msg, State) -> {noreply, State}.
 
+handle_info({'EXIT', _Pid, _Error}, State) ->
+  error_logger:error_msg("Port closed, restarting port...~n", []),
+  Handler = State#state.handler,
+  Ducky = port_wrapper:wrap_link("ruby " ++ Handler),
+  {noreply, State#state{ducky = Ducky}};
 handle_info(Msg, State) ->
   error_logger:error_msg("Unexpected message: ~p~n", [Msg]),
   {noreply, State}.
