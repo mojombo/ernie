@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 %% api
--export([start_link/1, start/1, lease_asset/0, return_asset/1]).
+-export([start_link/1, start/1, lease/0, return/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -21,11 +21,11 @@ start_link(Args) ->
 start(Args) ->
   gen_server:start({global, ?MODULE}, ?MODULE, Args, []).
 
-lease_asset() ->
-  gen_server:call({global, ?MODULE}, {lease_asset}).
+lease() ->
+  gen_server:call({global, ?MODULE}, {lease}).
 
-return_asset(Asset) ->
-  gen_server:call({global, ?MODULE}, {return_asset, Asset}).
+return(Asset) ->
+  gen_server:call({global, ?MODULE}, {return, Asset}).
 
 %%====================================================================
 %% gen_server callbacks
@@ -53,10 +53,12 @@ init([Count, Handler]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call({lease_asset}, _From, State) ->
-  {{value, Asset}, Assets2} = queue:out(State#state.assets),
-  {reply, Asset, State#state{assets = Assets2}};
-handle_call({return_asset, Asset}, _From, State) ->
+handle_call({lease}, _From, State) ->
+  case queue:out(State#state.assets) of
+    {{value, Asset}, Assets2} -> {reply, {ok, Asset}, State#state{assets = Assets2}};
+    {empty, _Assets2} -> {reply, empty, State}
+  end;
+handle_call({return, Asset}, _From, State) ->
   Assets2 = queue:in(Asset, State#state.assets),
   {reply, ok, State#state{assets = Assets2}};
 handle_call(_Request, _From, State) ->

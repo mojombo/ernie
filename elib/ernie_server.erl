@@ -2,15 +2,14 @@
 -behaviour(gen_server).
 
 %% api
--export([start_link/1, start/1]).
+-export([start_link/1, start/1, process/1, asset_freed/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
 -record(state, {lsock = undefined,
-                handler = undefined,
-                ducky = undefined}).
+                pending = queue:new()}).
 
 %%====================================================================
 %% API
@@ -21,6 +20,12 @@ start_link(Args) ->
 
 start(Args) ->
   gen_server:start({global, ?MODULE}, ?MODULE, Args, []).
+
+process(Sock) ->
+  gen_server:cast({global, ?MODULE}, {process, Sock}).
+
+asset_freed() ->
+  gen_server:cast({global, ?MODULE}, {asset_freed}).
 
 %%====================================================================
 %% gen_server callbacks
@@ -58,13 +63,34 @@ handle_call(_Request, _From, State) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
+handle_cast({process, Sock}, State) ->
+  case queue:is_empty(State#state.pending) of
+    false ->
+      Pending2 = queue:in(Sock, State#state.pending),
+      io:format("Q", []),
+      {noreply, State#state{pending = Pending2}};
+    true ->
+      State2 = try_process_now(Sock, State),
+      {noreply, State2}
+    end;
+handle_cast({asset_freed}, State) ->
+  case queue:is_empty(State#state.pending) of
+    false ->
+      case asset_pool:lease() of
+        {ok, Asset} ->
+          {{value, Sock}, Pending2} = queue:out(State#state.pending),
+          io:format("d", []),
+          spawn(fun() -> process_now(Sock, Asset) end),
+          {noreply, State#state{pending = Pending2}};
+        empty ->
+          io:format(".", []),
+          {noreply, State}
+      end;
+    true ->
+      {noreply, State}
+    end;
 handle_cast(_Msg, State) -> {noreply, State}.
 
-handle_info({'EXIT', _Pid, _Error}, State) ->
-  error_logger:error_msg("Port closed, restarting port...~n", []),
-  Handler = State#state.handler,
-  Ducky = port_wrapper:wrap_link("ruby " ++ Handler),
-  {noreply, State#state{ducky = Ducky}};
 handle_info(Msg, State) ->
   error_logger:error_msg("Unexpected message: ~p~n", [Msg]),
   {noreply, State}.
@@ -93,20 +119,35 @@ try_listen(Port, Times) ->
 
 loop(LSock) ->
   {ok, Sock} = gen_tcp:accept(LSock),
-  spawn(fun() -> handle_method(Sock) end),
+  ernie_server:process(Sock),
   loop(LSock).
 
-handle_method(Sock) ->
+try_process_now(Sock, State) ->
+  case asset_pool:lease() of
+    {ok, Asset} ->
+      io:format("i", []),
+      spawn(fun() -> process_now(Sock, Asset) end),
+      State;
+    empty ->
+      io:format("q", []),
+      Pending2 = queue:in(Sock, State#state.pending),
+      State#state{pending = Pending2}
+  end.
+
+process_now(Sock, Asset) ->
   case gen_tcp:recv(Sock, 0) of
     {ok, BinaryTerm} ->
-      io:format(".", []),
-      Asset = asset_pool:lease_asset(),
+      % io:format(".", []),
       % error_logger:info_msg("From Internet: ~p~n", [BinaryTerm]),
       {ok, Data} = port_wrapper:rpc(Asset, BinaryTerm),
       % error_logger:info_msg("From Port: ~p~n", [Data]),
-      asset_pool:return_asset(Asset),
+      asset_pool:return(Asset),
+      ernie_server:asset_freed(),
       gen_tcp:send(Sock, Data),
       ok = gen_tcp:close(Sock);
     {error, closed} ->
+      asset_pool:return(Asset),
+      ernie_server:asset_freed(),
+      io:format("c", []),
       ok = gen_tcp:close(Sock)
   end.
