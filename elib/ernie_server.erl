@@ -99,6 +99,7 @@ loop(LSock) ->
 handle_method(Sock) ->
   case gen_tcp:recv(Sock, 0) of
     {ok, BinaryTerm} ->
+      io:format(".", []),
       Asset = asset_pool:lease_asset(),
       % error_logger:info_msg("From Internet: ~p~n", [BinaryTerm]),
       {ok, Data} = port_wrapper:rpc(Asset, BinaryTerm),

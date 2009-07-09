@@ -33,6 +33,10 @@ OptionParser.new do |opts|
     options[:port] = x
   end
 
+  opts.on("-n NUMBER", "--number NUMBER", "Number of handler instances") do |x|
+    options[:number] = x
+  end
+
   opts.on("-d", "--detached", "Run as a daemon") do
     options[:detached] = true
   end
@@ -50,6 +54,7 @@ unless handler
 end
 
 port = options[:port] || 8000
+number = options[:number] || 1
 pidfile = options[:pidfile] ? "-ernie_server_app pidfile \"'#{options[:pidfile]}'\"" : ''
 detached = options[:detached] ? '-detached' : ''
 
@@ -62,6 +67,7 @@ cmd = %Q{erl -boot start_sasl \
              #{pidfile} \
              -ernie_server_app port #{port} \
              -ernie_server_app handler '"#{handler}"' \
+             -ernie_server_app number #{number} \
              -run ernie_server_app boot}.squeeze(' ')
 puts cmd
 exec(cmd)
