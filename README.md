@@ -26,8 +26,8 @@ Running
 -------
 
     Usage: ernie [options] <handler>
-        -n, --name NAME                  Node name
         -p, --port PORT                  Port
+        -n, --number NUMBER              Number of handler instances
         -d, --detached                   Run as a daemon
         -P, --pidfile PIDFILE            Location to write pid file.
 
