@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ernie}
-  s.version = "0.1.0"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tom Preston-Werner"]
-  s.date = %q{2009-05-18}
+  s.date = %q{2009-07-09}
   s.default_executable = %q{ernie}
   s.email = %q{tom@mojombo.com}
   s.executables = ["ernie"]
@@ -24,10 +24,14 @@ Gem::Specification.new do |s|
      "VERSION.yml",
      "bin/ernie",
      "ebin/ernie_server_app.app",
+     "elib/asset_pool.erl",
+     "elib/asset_pool_sup.erl",
      "elib/ernie_server.erl",
      "elib/ernie_server_app.erl",
      "elib/ernie_server_sup.erl",
      "elib/port_wrapper.erl",
+     "ernie.gemspec",
+     "examples/calc.rb",
      "ext/Makefile",
      "ext/extconf.rb",
      "lib/ernie.rb",
@@ -42,7 +46,8 @@ Gem::Specification.new do |s|
   s.summary = %q{TODO}
   s.test_files = [
     "test/ernie_test.rb",
-     "test/test_helper.rb"
+     "test/test_helper.rb",
+     "examples/calc.rb"
   ]
 
   if s.respond_to? :specification_version then
