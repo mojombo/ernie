@@ -9,7 +9,8 @@
          terminate/2, code_change/3]).
 
 -record(state, {assets = undefined,
-                handler = undefined}).
+                handler = undefined,
+                token = undefined}).
 
 %%====================================================================
 %% API
@@ -41,8 +42,9 @@ return(Asset) ->
 init([Count, Handler]) ->
   process_flag(trap_exit, true),
   error_logger:info_msg("~p starting~n", [?MODULE]),
-  Assets = start_handlers(Count, Handler),
-  {ok, #state{assets = Assets, handler = Handler}}.
+  Token = make_ref(),
+  Assets = start_handlers(Count, Handler, Token),
+  {ok, #state{assets = Assets, handler = Handler, token = Token}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -55,8 +57,10 @@ init([Count, Handler]) ->
 %%--------------------------------------------------------------------
 handle_call({lease}, _From, State) ->
   case queue:out(State#state.assets) of
-    {{value, Asset}, Assets2} -> {reply, {ok, Asset}, State#state{assets = Assets2}};
-    {empty, _Assets2} -> {reply, empty, State}
+    {{value, Asset}, Assets2} ->
+      {reply, {ok, Asset}, State#state{assets = Assets2}};
+    {empty, _Assets2} ->
+      {reply, empty, State}
   end;
 handle_call({return, Asset}, _From, State) ->
   Assets2 = queue:in(Asset, State#state.assets),
@@ -89,12 +93,12 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %% Internal
 %%====================================================================
 
-start_handlers(Count, Handler) ->
-  start_handlers(queue:new(), Count, Handler).
+start_handlers(Count, Handler, Token) ->
+  start_handlers(queue:new(), Count, Handler, Token).
 
-start_handlers(Assets, 0, _Handler) ->
+start_handlers(Assets, 0, _Handler, _Token) ->
   Assets;
-start_handlers(Assets, Count, Handler) ->
-  Asset = port_wrapper:wrap_link("ruby " ++ Handler),
+start_handlers(Assets, Count, Handler, Token) ->
+  Asset = {asset, port_wrapper:wrap_link("ruby " ++ Handler), Token},
   Assets2 = queue:in(Asset, Assets),
-  start_handlers(Assets2, Count - 1, Handler).
+  start_handlers(Assets2, Count - 1, Handler, Token).

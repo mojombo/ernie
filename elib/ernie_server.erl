@@ -106,7 +106,7 @@ try_listen(Port, 0) ->
   error_logger:error_msg("Could not listen on port ~p~n", [Port]),
   {error, "Could not listen on port"};
 try_listen(Port, Times) ->
-  Res = gen_tcp:listen(Port, [binary, {packet, 4}, {active, false}]),
+  Res = gen_tcp:listen(Port, [binary, {packet, 4}, {active, false}, {reuseaddr, true}]),
   case Res of
     {ok, LSock} ->
       error_logger:info_msg("Listening on port ~p~n", [Port]),
@@ -139,7 +139,8 @@ process_now(Sock, Asset) ->
     {ok, BinaryTerm} ->
       % io:format(".", []),
       % error_logger:info_msg("From Internet: ~p~n", [BinaryTerm]),
-      {ok, Data} = port_wrapper:rpc(Asset, BinaryTerm),
+      {asset, Port, _Token} = Asset,
+      {ok, Data} = port_wrapper:rpc(Port, BinaryTerm),
       % error_logger:info_msg("From Port: ~p~n", [Data]),
       asset_pool:return(Asset),
       ernie_server:asset_freed(),
