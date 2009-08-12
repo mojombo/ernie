@@ -139,7 +139,8 @@ process_now(Sock, Asset) ->
     {ok, BinaryTerm} ->
       % io:format(".", []),
       % error_logger:info_msg("From Internet: ~p~n", [BinaryTerm]),
-      {asset, Port, _Token} = Asset,
+      {asset, Port, Token} = Asset,
+      io:format("~p ~p~n", [Port, Token]),
       {ok, Data} = port_wrapper:rpc(Port, BinaryTerm),
       % error_logger:info_msg("From Port: ~p~n", [Data]),
       asset_pool:return(Asset),

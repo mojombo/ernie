@@ -1,5 +1,5 @@
 -module(port_wrapper).
--export([wrap/1, wrap/2, wrap_link/1, wrap_link/2, send/2, shutdown/1, rpc/2]).
+-export([wrap/1, wrap/2, wrap_link/1, wrap_link/2, send/2, shutdown/1, close/1, rpc/2]).
 
 wrap(Command) ->
  spawn(fun() -> process_flag(trap_exit, true), Port = create_port(Command), loop(Port, infinity, Command) end).
@@ -25,6 +25,10 @@ send(WrappedPort, Message) ->
 
 shutdown(WrappedPort) ->
   WrappedPort ! shutdown,
+  true.
+
+close(WrappedPort) ->
+  WrappedPort ! noose,
   true.
 
 create_port(Command) ->

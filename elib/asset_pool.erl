@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 %% api
--export([start_link/1, start/1, lease/0, return/1]).
+-export([start_link/1, start/1, lease/0, return/1, reload_assets/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -27,6 +27,9 @@ lease() ->
 
 return(Asset) ->
   gen_server:call({global, ?MODULE}, {return, Asset}).
+
+reload_assets() ->
+  gen_server:call({global, ?MODULE}, {reload_assets}).
 
 %%====================================================================
 %% gen_server callbacks
@@ -56,15 +59,38 @@ init([Count, Handler]) ->
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
 handle_call({lease}, _From, State) ->
+  Token = State#state.token,
   case queue:out(State#state.assets) of
     {{value, Asset}, Assets2} ->
-      {reply, {ok, Asset}, State#state{assets = Assets2}};
+      {asset, Port, AssetToken} = Asset,
+      case AssetToken =:= Token of
+        false ->
+          port_wrapper:close(Port),
+          Handler = State#state.handler,
+          NewAsset = create_asset(Handler, Token);
+        true ->
+          NewAsset = Asset
+      end,
+      {reply, {ok, NewAsset}, State#state{assets = Assets2}};
     {empty, _Assets2} ->
       {reply, empty, State}
   end;
 handle_call({return, Asset}, _From, State) ->
-  Assets2 = queue:in(Asset, State#state.assets),
+  Token = State#state.token,
+  {asset, Port, AssetToken} = Asset,
+  case AssetToken =:= Token of
+    false ->
+      port_wrapper:close(Port),
+      Handler = State#state.handler,
+      NewAsset = create_asset(Handler, Token);
+    true ->
+      NewAsset = Asset
+  end,
+  Assets2 = queue:in(NewAsset, State#state.assets),
   {reply, ok, State#state{assets = Assets2}};
+handle_call({reload_assets}, _From, State) ->
+  Token = make_ref(),
+  {reply, ok, State#state{token = Token}};
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
 
@@ -76,11 +102,16 @@ handle_call(_Request, _From, State) ->
 %%--------------------------------------------------------------------
 handle_cast(_Msg, State) -> {noreply, State}.
 
-handle_info({'EXIT', _Pid, _Error}, State) ->
-  error_logger:error_msg("Port closed, restarting port...~n", []),
+handle_info({'EXIT', _Pid, normal}, State) ->
+  {noreply, State};
+handle_info({'EXIT', Pid, Error}, State) ->
+  error_logger:error_msg("Port ~p closed with ~p, restarting port...~n", [Pid, Error]),
+  io:format("~p~n", [State#state.assets]),
+  ValidAssets = queue:filter(fun(Item) -> {asset, A, _T} = Item, A =/= Pid end, State#state.assets),
   Handler = State#state.handler,
-  Asset = port_wrapper:wrap_link("ruby " ++ Handler),
-  Assets = queue:in(Asset, State#state.assets),
+  Token = State#state.token,
+  NewAsset = create_asset(Handler, Token),
+  Assets = queue:in(NewAsset, ValidAssets),
   {noreply, State#state{assets = Assets}};
 handle_info(Msg, State) ->
   error_logger:error_msg("Unexpected message: ~p~n", [Msg]),
@@ -99,6 +130,9 @@ start_handlers(Count, Handler, Token) ->
 start_handlers(Assets, 0, _Handler, _Token) ->
   Assets;
 start_handlers(Assets, Count, Handler, Token) ->
-  Asset = {asset, port_wrapper:wrap_link("ruby " ++ Handler), Token},
+  Asset = create_asset(Handler, Token),
   Assets2 = queue:in(Asset, Assets),
   start_handlers(Assets2, Count - 1, Handler, Token).
+
+create_asset(Handler, Token) ->
+  {asset, port_wrapper:wrap_link("ruby " ++ Handler), Token}.
