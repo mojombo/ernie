@@ -37,6 +37,10 @@ OptionParser.new do |opts|
     options[:number] = x
   end
 
+  opts.on("-l LOGLEVEL", "--log-level LOGLEVEL", "Log level (0-4)") do |x|
+    options[:log_level] = x
+  end
+
   opts.on("-d", "--detached", "Run as a daemon") do
     options[:detached] = true
   end
@@ -55,6 +59,7 @@ end
 
 port = options[:port] || 8000
 number = options[:number] || 1
+log_level = options[:log_level] || 2
 pidfile = options[:pidfile] ? "-ernie_server_app pidfile \"'#{options[:pidfile]}'\"" : ''
 detached = options[:detached] ? '-detached' : ''
 
@@ -68,6 +73,7 @@ cmd = %Q{erl -boot start_sasl \
              -ernie_server_app port #{port} \
              -ernie_server_app handler '"#{handler}"' \
              -ernie_server_app number #{number} \
+             -ernie_server_app log_level #{log_level} \
              -run ernie_server_app boot}.squeeze(' ')
 puts cmd
 exec(cmd)

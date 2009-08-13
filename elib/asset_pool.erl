@@ -106,7 +106,6 @@ handle_info({'EXIT', _Pid, normal}, State) ->
   {noreply, State};
 handle_info({'EXIT', Pid, Error}, State) ->
   error_logger:error_msg("Port ~p closed with ~p, restarting port...~n", [Pid, Error]),
-  io:format("~p~n", [State#state.assets]),
   ValidAssets = queue:filter(fun(Item) -> {asset, A, _T} = Item, A =/= Pid end, State#state.assets),
   Handler = State#state.handler,
   Token = State#state.token,

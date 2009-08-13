@@ -66,14 +66,13 @@ handle_call(_Request, _From, State) ->
 handle_cast({process, Sock}, State) ->
   case gen_tcp:recv(Sock, 0) of
     {ok, BinaryTerm} ->
-      io:format("Got ~p~n", [BinaryTerm]),
+      logger:debug("Got binary term: ~p~n", [BinaryTerm]),
       Term = binary_to_term(BinaryTerm),
-      io:format("Got ~p~n", [Term]),
+      logger:info("Got term: ~p~n", [Term]),
       case Term of
         {call, '__admin__', Fun, Args} ->
           State2 = process_admin(Fun, Args);
         Any ->
-          io:format("Got ~p~n", [Any]),
           State2 = process_normal(BinaryTerm, Sock, State)
       end,
       {noreply, State2};
@@ -87,11 +86,11 @@ handle_cast({asset_freed}, State) ->
       case asset_pool:lease() of
         {ok, Asset} ->
           {{value, {pending, BinaryTerm, Sock}}, Pending2} = queue:out(State#state.pending),
-          io:format("d", []),
+          % io:format("d", []),
           spawn(fun() -> process_now(BinaryTerm, Sock, Asset) end),
           {noreply, State#state{pending = Pending2}};
         empty ->
-          io:format(".", []),
+          % io:format(".", []),
           {noreply, State}
       end;
     true ->
@@ -127,7 +126,7 @@ try_listen(Port, Times) ->
 
 loop(LSock) ->
   {ok, Sock} = gen_tcp:accept(LSock),
-  io:format("Accepted ~p~n", [Sock]),
+  logger:debug("Accepted socket: ~p~n", [Sock]),
   ernie_server:process(Sock),
   loop(LSock).
 
@@ -138,7 +137,7 @@ process_normal(BinaryTerm, Sock, State) ->
   case queue:is_empty(State#state.pending) of
     false ->
       Pending2 = queue:in({pending, BinaryTerm, Sock}, State#state.pending),
-      io:format("Q", []),
+      % io:format("Q", []),
       State#state{pending = Pending2};
     true ->
       try_process_now(BinaryTerm, Sock, State)
@@ -147,11 +146,11 @@ process_normal(BinaryTerm, Sock, State) ->
 try_process_now(BinaryTerm, Sock, State) ->
   case asset_pool:lease() of
     {ok, Asset} ->
-      io:format("i", []),
+      % io:format("i", []),
       spawn(fun() -> process_now(BinaryTerm, Sock, Asset) end),
       State;
     empty ->
-      io:format("q", []),
+      % io:format("q", []),
       Pending2 = queue:in({pending, BinaryTerm, Sock}, State#state.pending),
       State#state{pending = Pending2}
   end.
@@ -160,7 +159,7 @@ process_now(BinaryTerm, Sock, Asset) ->
   % io:format(".", []),
   % error_logger:info_msg("From Internet: ~p~n", [BinaryTerm]),
   {asset, Port, Token} = Asset,
-  io:format("~p ~p~n", [Port, Token]),
+  logger:debug("Asset: ~p ~p~n", [Port, Token]),
   {ok, Data} = port_wrapper:rpc(Port, BinaryTerm),
   % error_logger:info_msg("From Port: ~p~n", [Data]),
   asset_pool:return(Asset),
