@@ -25,12 +25,17 @@ Installation
 Running
 -------
 
-    Usage: ernie [options] <handler>
+    Usage: ernie [command] [options]
+        -h, --handler HANDLER            Handler file
         -p, --port PORT                  Port
         -n, --number NUMBER              Number of handler instances
         -d, --detached                   Run as a daemon
         -P, --pidfile PIDFILE            Location to write pid file.
-
+    
+    Examples:
+      ernie -d -p 9999 -n 10 -h calc.rb
+        Start the ernie server in the background on port 9999 with ten
+        handlers, using the calc.rb handler file.
 
 Example Handler
 ---------------

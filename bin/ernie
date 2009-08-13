@@ -29,6 +29,10 @@ options = {}
 OptionParser.new do |opts|
   opts.banner = help
 
+  opts.on("-h HANDLER", "--handler HANDLER", "Handler ruby file") do |x|
+    options[:handler] = x
+  end
+
   opts.on("-p PORT", "--port PORT", "Port") do |x|
     options[:port] = x
   end
@@ -50,13 +54,14 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-handler = ARGV[0]
+command = ARGV[0]
 
-unless handler
-  puts "A handler must be specified: ernie /path/to/handler.rb"
+if !command && !options[:handler]
+  puts "A handler must be specified: ernie -h /path/to/handler.rb"
   exit(1)
 end
 
+handler = options[:handler]
 port = options[:port] || 8000
 number = options[:number] || 1
 log_level = options[:log_level] || 2
