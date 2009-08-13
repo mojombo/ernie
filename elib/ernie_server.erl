@@ -64,23 +64,31 @@ handle_call(_Request, _From, State) ->
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
 handle_cast({process, Sock}, State) ->
-  case queue:is_empty(State#state.pending) of
-    false ->
-      Pending2 = queue:in(Sock, State#state.pending),
-      io:format("Q", []),
-      {noreply, State#state{pending = Pending2}};
-    true ->
-      State2 = try_process_now(Sock, State),
-      {noreply, State2}
-    end;
+  case gen_tcp:recv(Sock, 0) of
+    {ok, BinaryTerm} ->
+      io:format("Got ~p~n", [BinaryTerm]),
+      Term = binary_to_term(BinaryTerm),
+      io:format("Got ~p~n", [Term]),
+      case Term of
+        {call, '__admin__', Fun, Args} ->
+          State2 = process_admin(Fun, Args);
+        Any ->
+          io:format("Got ~p~n", [Any]),
+          State2 = process_normal(BinaryTerm, Sock, State)
+      end,
+      {noreply, State2};
+    {error, closed} ->
+      ok = gen_tcp:close(Sock),
+      {noreply, State}
+  end;
 handle_cast({asset_freed}, State) ->
   case queue:is_empty(State#state.pending) of
     false ->
       case asset_pool:lease() of
         {ok, Asset} ->
-          {{value, Sock}, Pending2} = queue:out(State#state.pending),
+          {{value, {pending, BinaryTerm, Sock}}, Pending2} = queue:out(State#state.pending),
           io:format("d", []),
-          spawn(fun() -> process_now(Sock, Asset) end),
+          spawn(fun() -> process_now(BinaryTerm, Sock, Asset) end),
           {noreply, State#state{pending = Pending2}};
         empty ->
           io:format(".", []),
@@ -88,7 +96,7 @@ handle_cast({asset_freed}, State) ->
       end;
     true ->
       {noreply, State}
-    end;
+  end;
 handle_cast(_Msg, State) -> {noreply, State}.
 
 handle_info(Msg, State) ->
@@ -119,37 +127,43 @@ try_listen(Port, Times) ->
 
 loop(LSock) ->
   {ok, Sock} = gen_tcp:accept(LSock),
+  io:format("Accepted ~p~n", [Sock]),
   ernie_server:process(Sock),
   loop(LSock).
 
-try_process_now(Sock, State) ->
+process_admin(Fun, Args) ->
+  {Fun, Args}.
+
+process_normal(BinaryTerm, Sock, State) ->
+  case queue:is_empty(State#state.pending) of
+    false ->
+      Pending2 = queue:in({pending, BinaryTerm, Sock}, State#state.pending),
+      io:format("Q", []),
+      State#state{pending = Pending2};
+    true ->
+      try_process_now(BinaryTerm, Sock, State)
+  end.
+
+try_process_now(BinaryTerm, Sock, State) ->
   case asset_pool:lease() of
     {ok, Asset} ->
       io:format("i", []),
-      spawn(fun() -> process_now(Sock, Asset) end),
+      spawn(fun() -> process_now(BinaryTerm, Sock, Asset) end),
       State;
     empty ->
       io:format("q", []),
-      Pending2 = queue:in(Sock, State#state.pending),
+      Pending2 = queue:in({pending, BinaryTerm, Sock}, State#state.pending),
       State#state{pending = Pending2}
   end.
 
-process_now(Sock, Asset) ->
-  case gen_tcp:recv(Sock, 0) of
-    {ok, BinaryTerm} ->
-      % io:format(".", []),
-      % error_logger:info_msg("From Internet: ~p~n", [BinaryTerm]),
-      {asset, Port, Token} = Asset,
-      io:format("~p ~p~n", [Port, Token]),
-      {ok, Data} = port_wrapper:rpc(Port, BinaryTerm),
-      % error_logger:info_msg("From Port: ~p~n", [Data]),
-      asset_pool:return(Asset),
-      ernie_server:asset_freed(),
-      gen_tcp:send(Sock, Data),
-      ok = gen_tcp:close(Sock);
-    {error, closed} ->
-      asset_pool:return(Asset),
-      ernie_server:asset_freed(),
-      io:format("c", []),
-      ok = gen_tcp:close(Sock)
-  end.
+process_now(BinaryTerm, Sock, Asset) ->
+  % io:format(".", []),
+  % error_logger:info_msg("From Internet: ~p~n", [BinaryTerm]),
+  {asset, Port, Token} = Asset,
+  io:format("~p ~p~n", [Port, Token]),
+  {ok, Data} = port_wrapper:rpc(Port, BinaryTerm),
+  % error_logger:info_msg("From Port: ~p~n", [Data]),
+  asset_pool:return(Asset),
+  ernie_server:asset_freed(),
+  gen_tcp:send(Sock, Data),
+  ok = gen_tcp:close(Sock).
