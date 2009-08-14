@@ -4,6 +4,7 @@ $:.unshift(File.join(File.dirname(__FILE__), *%w[.. lib]))
 ERNIE_ROOT = File.join(File.dirname(__FILE__), *%w[..])
 
 DEFAULT_ERLANG_CODEPATHS = %w[ebin]
+DEFAULT_PORT = 8000
 
 def rel(path)
   File.join(ERNIE_ROOT, path)
@@ -54,31 +55,43 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-command = ARGV[0]
+if command = ARGV[0]
+  if !%w{reload-handlers}.include?(command)
+    puts "Invlalid command. Valid commands are:"
+    puts "  reload-handlers"
+    exit(1)
+  end
 
-if !command && !options[:handler]
-  puts "A handler must be specified: ernie -h /path/to/handler.rb"
-  exit(1)
+  require 'rubygems'
+  require 'bertrpc'
+  port = options[:port] || DEFAULT_PORT
+  svc = BERTRPC::Service.new('localhost', port)
+  puts svc.call.__admin__.send(command.gsub(/-/, '_'))
+else
+  if !options[:handler]
+    puts "A handler must be specified: ernie -h /path/to/handler.rb"
+    exit(1)
+  end
+
+  handler = options[:handler]
+  port = options[:port] || DEFAULT_PORT
+  number = options[:number] || 1
+  log_level = options[:log_level] || 2
+  pidfile = options[:pidfile] ? "-ernie_server_app pidfile \"'#{options[:pidfile]}'\"" : ''
+  detached = options[:detached] ? '-detached' : ''
+
+  cmd = %Q{erl -boot start_sasl \
+               #{detached} \
+               +Bc \
+               +K true \
+               -smp enable \
+               #{code_paths}
+               #{pidfile} \
+               -ernie_server_app port #{port} \
+               -ernie_server_app handler '"#{handler}"' \
+               -ernie_server_app number #{number} \
+               -ernie_server_app log_level #{log_level} \
+               -run ernie_server_app boot}.squeeze(' ')
+  puts cmd
+  exec(cmd)
 end
-
-handler = options[:handler]
-port = options[:port] || 8000
-number = options[:number] || 1
-log_level = options[:log_level] || 2
-pidfile = options[:pidfile] ? "-ernie_server_app pidfile \"'#{options[:pidfile]}'\"" : ''
-detached = options[:detached] ? '-detached' : ''
-
-cmd = %Q{erl -boot start_sasl \
-             #{detached} \
-             +Bc \
-             +K true \
-             -smp enable \
-             #{code_paths}
-             #{pidfile} \
-             -ernie_server_app port #{port} \
-             -ernie_server_app handler '"#{handler}"' \
-             -ernie_server_app number #{number} \
-             -ernie_server_app log_level #{log_level} \
-             -run ernie_server_app boot}.squeeze(' ')
-puts cmd
-exec(cmd)

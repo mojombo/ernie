@@ -71,7 +71,7 @@ handle_cast({process, Sock}, State) ->
       logger:info("Got term: ~p~n", [Term]),
       case Term of
         {call, '__admin__', Fun, Args} ->
-          State2 = process_admin(Fun, Args);
+          State2 = process_admin(Sock, Fun, Args, State);
         Any ->
           State2 = process_normal(BinaryTerm, Sock, State)
       end,
@@ -130,8 +130,15 @@ loop(LSock) ->
   ernie_server:process(Sock),
   loop(LSock).
 
-process_admin(Fun, Args) ->
-  {Fun, Args}.
+process_admin(Sock, reload_handlers, _Args, State) ->
+  asset_pool:reload_assets(),
+  gen_tcp:send(Sock, term_to_binary({reply, <<"Handlers reloaded.">>})),
+  ok = gen_tcp:close(Sock),
+  State;
+process_admin(Sock, Fun, _Args, State) ->
+  gen_tcp:send(Sock, term_to_binary({reply, <<"Admin function not supported.">>})),
+  ok = gen_tcp:close(Sock),
+  State.
 
 process_normal(BinaryTerm, Sock, State) ->
   case queue:is_empty(State#state.pending) of

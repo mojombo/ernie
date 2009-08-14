@@ -32,10 +32,19 @@ Running
         -d, --detached                   Run as a daemon
         -P, --pidfile PIDFILE            Location to write pid file.
     
+    Commands:
+      <none>                Start an Ernie server.
+      reload-handlers       Gracefully reload all of the the ruby handlers
+                            and use the new code for all subsequent requests.
+    
     Examples:
       ernie -d -p 9999 -n 10 -h calc.rb
         Start the ernie server in the background on port 9999 with ten
         handlers, using the calc.rb handler file.
+    
+      ernie reload-handlers -p 9999
+        Reload the handlers for the ernie server currently running on
+        port 9999.
 
 Example Handler
 ---------------
@@ -65,7 +74,7 @@ You can make BERT-RPC calls from Ruby with the [BERTRPC gem](http://github.com/m
     require 'bertrpc'
     
     svc = BERTRPC::Service.new('localhost', 8000)
-    svc.calc.add.call(1, 2)
+    svc.call.calc.add(1, 2)
     # => 3
 
 
