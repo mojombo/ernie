@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ernie}
-  s.version = "0.3.0"
+  s.version = "0.3.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tom Preston-Werner"]
-  s.date = %q{2009-08-13}
+  s.date = %q{2009-08-14}
   s.default_executable = %q{ernie}
   s.email = %q{tom@mojombo.com}
   s.executables = ["ernie"]
@@ -45,7 +45,7 @@ Gem::Specification.new do |s|
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.5}
-  s.summary = %q{TODO}
+  s.summary = %q{Ernie is a BERT-RPC server implementation.}
   s.test_files = [
     "test/ernie_test.rb",
      "test/load.rb",
