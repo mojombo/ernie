@@ -5,7 +5,7 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "ernie"
-    gem.summary = %Q{TODO}
+    gem.summary = %Q{Ernie is a BERT-RPC server implementation.}
     gem.email = "tom@mojombo.com"
     gem.homepage = "http://github.com/mojombo/ernie"
     gem.authors = ["Tom Preston-Werner"]
