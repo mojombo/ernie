@@ -83,6 +83,16 @@ class Ernie
         f.receive_loop
       end
 
+      f.when([:cast, Symbol, Symbol, Array]) do |mod, fun, args|
+        self.log("-> " + [:cast, mod, fun, args].inspect)
+        begin
+          self.dispatch(mod, fun, args)
+        rescue Object => e
+          # ignore
+        end
+        f.receive_loop
+      end
+
       f.when(Any) do |any|
         self.log("-> " + any.inspect)
         xres = [:error, [:server, 0, "Invalid request: #{any.inspect}"]]
