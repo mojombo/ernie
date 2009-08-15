@@ -21,7 +21,12 @@ help = <<HELP
 Ernie is an Erlang/Ruby BERT-RPC Server.
 
 Basic Command Line Usage:
-  ernie [options] <path to handler file>
+  ernie [command] [options]
+
+Commands:
+  <none>                Start an Ernie server.
+  reload-handlers       Gracefully reload all of the the ruby handlers
+                        and use the new code for all subsequent requests.
 
 Options:
 HELP
