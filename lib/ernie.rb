@@ -90,6 +90,7 @@ class Ernie
         rescue Object => e
           # ignore
         end
+        f.send!([:noreply])
         f.receive_loop
       end
 

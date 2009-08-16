@@ -154,6 +154,16 @@ receive_term(Request, State) ->
   end.
 
 process_request(Request, State) ->
+  ActionTerm = binary_to_term(Request#request.action),
+  case ActionTerm of
+    {cast, _Mod, _Fun, _Args} ->
+      Sock = Request#request.sock,
+      gen_tcp:send(Sock, term_to_binary({noreply})),
+      ok = gen_tcp:close(Sock),
+      logger:debug("Closing cast.~n", []);
+    Any ->
+      ok
+  end,
   case queue:is_empty(State#state.pending) of
     false ->
       Pending2 = queue:in(Request, State#state.pending),
@@ -176,15 +186,24 @@ try_process_now(Request, State) ->
   end.
 
 process_now(Request, Asset) ->
-  Sock = Request#request.sock,
   BinaryTerm = Request#request.action,
-  % io:format(".", []),
-  % error_logger:info_msg("From Internet: ~p~n", [BinaryTerm]),
-  {asset, Port, Token} = Asset,
-  logger:debug("Asset: ~p ~p~n", [Port, Token]),
-  {ok, Data} = port_wrapper:rpc(Port, BinaryTerm),
-  % error_logger:info_msg("From Port: ~p~n", [Data]),
-  asset_pool:return(Asset),
-  ernie_server:asset_freed(),
-  gen_tcp:send(Sock, Data),
-  ok = gen_tcp:close(Sock).
+  Term = binary_to_term(BinaryTerm),
+  case Term of
+    {call, Mod, Fun, Args} ->
+      logger:debug("Calling ~p:~p(~p)~n", [Mod, Fun, Args]),
+      Sock = Request#request.sock,
+      {asset, Port, Token} = Asset,
+      logger:debug("Asset: ~p ~p~n", [Port, Token]),
+      {ok, Data} = port_wrapper:rpc(Port, BinaryTerm),
+      asset_pool:return(Asset),
+      ernie_server:asset_freed(),
+      gen_tcp:send(Sock, Data),
+      ok = gen_tcp:close(Sock);
+    {cast, Mod, Fun, Args} ->
+      logger:debug("Casting ~p:~p(~p)~n", [Mod, Fun, Args]),
+      {asset, Port, Token} = Asset,
+      logger:debug("Asset: ~p ~p~n", [Port, Token]),
+      {ok, Data} = port_wrapper:rpc(Port, BinaryTerm),
+      asset_pool:return(Asset),
+      ernie_server:asset_freed()
+  end.
