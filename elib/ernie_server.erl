@@ -161,7 +161,7 @@ process_request(Request, State) ->
       gen_tcp:send(Sock, term_to_binary({noreply})),
       ok = gen_tcp:close(Sock),
       logger:debug("Closing cast.~n", []);
-    Any ->
+    _Any ->
       ok
   end,
   case queue:is_empty(State#state.pending) of
@@ -186,6 +186,17 @@ try_process_now(Request, State) ->
   end.
 
 process_now(Request, Asset) ->
+  try unsafe_process_now(Request, Asset) of
+    _AnyResponse -> ok
+  catch
+    _AnyError -> ok
+  after
+    asset_pool:return(Asset),
+    ernie_server:asset_freed(),
+    gen_tcp:close(Request#request.sock)
+  end.
+
+unsafe_process_now(Request, Asset) ->
   BinaryTerm = Request#request.action,
   Term = binary_to_term(BinaryTerm),
   case Term of
@@ -195,15 +206,11 @@ process_now(Request, Asset) ->
       {asset, Port, Token} = Asset,
       logger:debug("Asset: ~p ~p~n", [Port, Token]),
       {ok, Data} = port_wrapper:rpc(Port, BinaryTerm),
-      asset_pool:return(Asset),
-      ernie_server:asset_freed(),
       gen_tcp:send(Sock, Data),
       ok = gen_tcp:close(Sock);
     {cast, Mod, Fun, Args} ->
       logger:debug("Casting ~p:~p(~p)~n", [Mod, Fun, Args]),
       {asset, Port, Token} = Asset,
       logger:debug("Asset: ~p ~p~n", [Port, Token]),
-      {ok, Data} = port_wrapper:rpc(Port, BinaryTerm),
-      asset_pool:return(Asset),
-      ernie_server:asset_freed()
+      {ok, _Data} = port_wrapper:rpc(Port, BinaryTerm)
   end.
