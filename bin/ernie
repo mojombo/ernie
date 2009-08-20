@@ -68,9 +68,10 @@ OptionParser.new do |opts|
 end.parse!
 
 if command = ARGV[0]
-  if !%w{reload-handlers}.include?(command)
+  if !%w{reload-handlers stats}.include?(command)
     puts "Invlalid command. Valid commands are:"
     puts "  reload-handlers"
+    puts "  stats"
     exit(1)
   end
 

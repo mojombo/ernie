@@ -126,6 +126,14 @@ process_admin(Sock, reload_handlers, _Args, State) ->
   gen_tcp:send(Sock, term_to_binary({reply, <<"Handlers reloaded.">>})),
   ok = gen_tcp:close(Sock),
   State;
+process_admin(Sock, stats, _Args, State) ->
+  IdleWorkers = asset_pool:idle_worker_count(),
+  IdleWorkersString = list_to_binary([<<"idle workers: ">>, integer_to_list(IdleWorkers), <<"\n">>]),
+  QueueLength = queue:len(State#state.pending),
+  QueueLengthString = list_to_binary([<<"pending connections: ">>, integer_to_list(QueueLength), <<"\n">>]),
+  gen_tcp:send(Sock, term_to_binary({reply, list_to_binary([IdleWorkersString, QueueLengthString])})),
+  ok = gen_tcp:close(Sock),
+  State;
 process_admin(Sock, _Fun, _Args, State) ->
   gen_tcp:send(Sock, term_to_binary({reply, <<"Admin function not supported.">>})),
   ok = gen_tcp:close(Sock),

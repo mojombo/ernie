@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 %% api
--export([start_link/1, start/1, lease/0, return/1, reload_assets/0]).
+-export([start_link/1, start/1, lease/0, return/1, reload_assets/0, idle_worker_count/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -30,6 +30,9 @@ return(Asset) ->
 
 reload_assets() ->
   gen_server:call({global, ?MODULE}, {reload_assets}).
+
+idle_worker_count() ->
+  gen_server:call({global, ?MODULE}, {idle_worker_count}).
 
 %%====================================================================
 %% gen_server callbacks
@@ -91,6 +94,9 @@ handle_call({return, Asset}, _From, State) ->
 handle_call({reload_assets}, _From, State) ->
   Token = make_ref(),
   {reply, ok, State#state{token = Token}};
+handle_call({idle_worker_count}, _From, State) ->
+  WorkerCount = queue:len(State#state.assets),
+  {reply, WorkerCount, State};
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
 
