@@ -59,6 +59,8 @@ class Ernie
   def self.dispatch(mod, fun, args)
     xargs = deconvert(args)
     self.log("-- " + [mod, fun, xargs].inspect)
+    self.mods[mod] || raise(ServerError.new("No such module: '#{mod}'"))
+    self.mods[mod].funs[fun] || raise(ServerError.new("No such function '#{mod}:#{fun}'"))
     res = self.mods[mod].funs[fun].call(*xargs)
     convert(res)
   end
@@ -74,8 +76,13 @@ class Ernie
           xres = [:reply, res]
           self.log("<- " + xres.inspect)
           f.send!(xres)
+        rescue ServerError => e
+          xres = [:error, [:server, 0, e.message, e.backtrace]]
+          self.log("<- " + xres.inspect)
+          self.log(e.backtrace.join("\n"))
+          f.send!(xres)
         rescue Object => e
-          xres = [:error, [:user, 0, e.message]]
+          xres = [:error, [:user, 0, e.message, e.backtrace]]
           self.log("<- " + xres.inspect)
           self.log(e.backtrace.join("\n"))
           f.send!(xres)
@@ -104,6 +111,8 @@ class Ernie
     end
   end
 end
+
+class Ernie::ServerError < StandardError; end
 
 class Ernie::Mod
   attr_accessor :name, :funs
