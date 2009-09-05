@@ -9,7 +9,8 @@
          terminate/2, code_change/3]).
 
 -record(state, {lsock = undefined,
-                pending = queue:new()}).
+                pending = queue:new(),
+                count = 0}).
 
 -record(request, {sock = undefined,
                   info = undefined,
@@ -70,7 +71,9 @@ handle_call(_Request, _From, State) ->
 handle_cast({process, Sock}, State) ->
   Request = #request{sock = Sock},
   State2 = receive_term(Request, State),
-  {noreply, State2};
+  Count = State2#state.count,
+  State3 = State2#state{count = Count + 1},
+  {noreply, State3};
 handle_cast({asset_freed}, State) ->
   case queue:is_empty(State#state.pending) of
     false ->
@@ -127,11 +130,13 @@ process_admin(Sock, reload_handlers, _Args, State) ->
   ok = gen_tcp:close(Sock),
   State;
 process_admin(Sock, stats, _Args, State) ->
+  Count = State#state.count,
+  CountString = list_to_binary([<<"total connections since start: ">>, integer_to_list(Count), <<"\n">>]),
   IdleWorkers = asset_pool:idle_worker_count(),
   IdleWorkersString = list_to_binary([<<"idle workers: ">>, integer_to_list(IdleWorkers), <<"\n">>]),
   QueueLength = queue:len(State#state.pending),
   QueueLengthString = list_to_binary([<<"pending connections: ">>, integer_to_list(QueueLength), <<"\n">>]),
-  gen_tcp:send(Sock, term_to_binary({reply, list_to_binary([IdleWorkersString, QueueLengthString])})),
+  gen_tcp:send(Sock, term_to_binary({reply, list_to_binary([CountString, IdleWorkersString, QueueLengthString])})),
   ok = gen_tcp:close(Sock),
   State;
 process_admin(Sock, _Fun, _Args, State) ->
