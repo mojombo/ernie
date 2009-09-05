@@ -131,11 +131,11 @@ process_admin(Sock, reload_handlers, _Args, State) ->
   State;
 process_admin(Sock, stats, _Args, State) ->
   Count = State#state.count,
-  CountString = list_to_binary([<<"total connections since start: ">>, integer_to_list(Count), <<"\n">>]),
+  CountString = list_to_binary([<<"connections.total=">>, integer_to_list(Count), <<"\n">>]),
   IdleWorkers = asset_pool:idle_worker_count(),
-  IdleWorkersString = list_to_binary([<<"idle workers: ">>, integer_to_list(IdleWorkers), <<"\n">>]),
+  IdleWorkersString = list_to_binary([<<"workers.idle=">>, integer_to_list(IdleWorkers), <<"\n">>]),
   QueueLength = queue:len(State#state.pending),
-  QueueLengthString = list_to_binary([<<"pending connections: ">>, integer_to_list(QueueLength), <<"\n">>]),
+  QueueLengthString = list_to_binary([<<"connections.pending=">>, integer_to_list(QueueLength), <<"\n">>]),
   gen_tcp:send(Sock, term_to_binary({reply, list_to_binary([CountString, IdleWorkersString, QueueLengthString])})),
   ok = gen_tcp:close(Sock),
   State;
