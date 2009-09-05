@@ -23,10 +23,7 @@ Installation
 
 You must have Erlang installed before installing Ernie.
 
-From GitHub:
-
-    gem install mojombo-ernie -s http://gems.github.com \
-                              -s http://gemcutter.org
+    $ gem install ernie -s http://gemcutter.org
 
 
 Running
@@ -43,6 +40,7 @@ Running
       <none>                Start an Ernie server.
       reload-handlers       Gracefully reload all of the the ruby handlers
                             and use the new code for all subsequent requests.
+      stats                 Print a list of connection and handler statistics.
     
     Examples:
       ernie -d -p 9999 -n 10 -h calc.rb
