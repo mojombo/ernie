@@ -15,3 +15,10 @@ mod(:slowcalc) do
     a + b
   end
 end
+
+# Throw an error
+mod(:errorcalc) do
+  fun(:add) do |a, b|
+    raise "abandon hope!"
+  end
+end
