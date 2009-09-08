@@ -1,4 +1,4 @@
-require 'test_helper'
+require File.dirname(__FILE__) + '/helper'
 
 class ErnieTest < Test::Unit::TestCase
   context "mod" do

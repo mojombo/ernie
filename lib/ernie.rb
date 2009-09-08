@@ -59,7 +59,7 @@ class Ernie
   def self.dispatch(mod, fun, args)
     xargs = deconvert(args)
     self.log("-- " + [mod, fun, xargs].inspect)
-    self.mods[mod] || raise(ServerError.new("No such module: '#{mod}'"))
+    self.mods[mod] || raise(ServerError.new("No such module '#{mod}'"))
     self.mods[mod].funs[fun] || raise(ServerError.new("No such function '#{mod}:#{fun}'"))
     res = self.mods[mod].funs[fun].call(*xargs)
     convert(res)
