@@ -77,12 +77,12 @@ class Ernie
           self.log("<- " + xres.inspect)
           f.send!(xres)
         rescue ServerError => e
-          xres = [:error, [:server, 0, e.message, e.backtrace]]
+          xres = [:error, [:server, 0, e.class.to_s, e.message, e.backtrace]]
           self.log("<- " + xres.inspect)
           self.log(e.backtrace.join("\n"))
           f.send!(xres)
         rescue Object => e
-          xres = [:error, [:user, 0, e.message, e.backtrace]]
+          xres = [:error, [:user, 0, e.class.to_s, e.message, e.backtrace]]
           self.log("<- " + xres.inspect)
           self.log(e.backtrace.join("\n"))
           f.send!(xres)
