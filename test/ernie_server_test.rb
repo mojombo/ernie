@@ -42,7 +42,7 @@ class ErnieServerTest < Test::Unit::TestCase
           @svc.call.failboat.mcfail(:fail)
           fail "Expected a BERTRPC::ServerError"
         rescue BERTRPC::ServerError => e
-          assert_equal "Ernie::ServerError: No such module 'failboat'", e.message
+          assert_equal "No such module 'failboat'", e.message
         end
       end
 
@@ -51,7 +51,7 @@ class ErnieServerTest < Test::Unit::TestCase
           @svc.call.test.mcfail(:fail)
           fail "Expected a BERTRPC::ServerError"
         rescue BERTRPC::ServerError => e
-          assert_equal "Ernie::ServerError: No such function 'test:mcfail'", e.message
+          assert_equal "No such function 'test:mcfail'", e.message
         end
       end
     end
