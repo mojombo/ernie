@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ernie}
-  s.version = "0.3.4"
+  s.version = "0.3.5"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tom Preston-Werner"]
-  s.date = %q{2009-09-06}
+  s.date = %q{2009-09-25}
   s.default_executable = %q{ernie}
   s.email = %q{tom@mojombo.com}
   s.executables = ["ernie"]
@@ -37,9 +37,11 @@ Gem::Specification.new do |s|
      "ext/Makefile",
      "ext/extconf.rb",
      "lib/ernie.rb",
+     "test/ernie_server_test.rb",
      "test/ernie_test.rb",
-     "test/load.rb",
-     "test/test_helper.rb"
+     "test/handler.rb",
+     "test/helper.rb",
+     "test/load.rb"
   ]
   s.homepage = %q{http://github.com/mojombo/ernie}
   s.rdoc_options = ["--charset=UTF-8"]
@@ -47,9 +49,11 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.5}
   s.summary = %q{Ernie is a BERT-RPC server implementation.}
   s.test_files = [
-    "test/ernie_test.rb",
+    "test/ernie_server_test.rb",
+     "test/ernie_test.rb",
+     "test/handler.rb",
+     "test/helper.rb",
      "test/load.rb",
-     "test/test_helper.rb",
      "examples/calc.rb"
   ]
 
@@ -59,13 +63,13 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<erlectricity>, [">= 1.0.1"])
-      s.add_runtime_dependency(%q<bertrpc>, [">= 0.2.0"])
+      s.add_runtime_dependency(%q<bertrpc>, [">= 0.3.4"])
     else
       s.add_dependency(%q<erlectricity>, [">= 1.0.1"])
-      s.add_dependency(%q<bertrpc>, [">= 0.2.0"])
+      s.add_dependency(%q<bertrpc>, [">= 0.3.4"])
     end
   else
     s.add_dependency(%q<erlectricity>, [">= 1.0.1"])
-    s.add_dependency(%q<bertrpc>, [">= 0.2.0"])
+    s.add_dependency(%q<bertrpc>, [">= 0.3.4"])
   end
 end
