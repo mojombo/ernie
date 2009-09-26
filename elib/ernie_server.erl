@@ -71,9 +71,7 @@ handle_call(_Request, _From, State) ->
 handle_cast({process, Sock}, State) ->
   Request = #request{sock = Sock},
   State2 = receive_term(Request, State),
-  Count = State2#state.count,
-  State3 = State2#state{count = Count + 1},
-  {noreply, State3};
+  {noreply, State2};
 handle_cast({asset_freed}, State) ->
   case queue:is_empty(State#state.pending) of
     false ->
@@ -187,15 +185,17 @@ process_request(Request, State) ->
   end.
 
 try_process_now(Request, State) ->
+  Count = State#state.count,
+  State2 = State#state{count = Count + 1},
   case asset_pool:lease() of
     {ok, Asset} ->
       % io:format("i", []),
       spawn(fun() -> process_now(Request, Asset) end),
-      State;
+      State2;
     empty ->
       % io:format("q", []),
       Pending2 = queue:in(Request, State#state.pending),
-      State#state{pending = Pending2}
+      State2#state{pending = Pending2}
   end.
 
 process_now(Request, Asset) ->
