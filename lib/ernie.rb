@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'erlectricity'
+require 'bert'
 require 'logger'
 
 class Ernie
@@ -30,39 +30,13 @@ class Ernie
     self.logger.info(text) if self.logger
   end
 
-  def self.convert(item)
-    if item.instance_of?(Hash)
-      a = [:dict]
-      item.each_pair { |k, v| a << [convert(k), convert(v)] }
-      a
-    elsif item.instance_of?(Array)
-      item.map { |x| convert(x) }
-    else
-      item
-    end
-  end
-
-  def self.deconvert(item)
-    if item.instance_of?(Array)
-      if item.first == :dict
-        item[1..-1].inject({}) do |acc, x|
-          acc[deconvert(x[0])] = deconvert(x[1]); acc
-        end
-      else
-        item.map { |x| deconvert(x) }
-      end
-    else
-      item
-    end
-  end
-
   def self.dispatch(mod, fun, args)
-    xargs = deconvert(args)
+    xargs = BERT::Decoder.convert(args)
     self.log("-- " + [mod, fun, xargs].inspect)
     self.mods[mod] || raise(ServerError.new("No such module '#{mod}'"))
     self.mods[mod].funs[fun] || raise(ServerError.new("No such function '#{mod}:#{fun}'"))
     res = self.mods[mod].funs[fun].call(*xargs)
-    convert(res)
+    BERT::Encoder.convert(res)
   end
 
   def self.start

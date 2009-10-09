@@ -11,8 +11,9 @@ begin
     gem.authors = ["Tom Preston-Werner"]
     gem.files.include(["ext"])
     gem.extensions << 'ext/extconf.rb'
-    gem.add_dependency('erlectricity', '>= 1.0.1')
-    gem.add_dependency('bertrpc', '>= 0.3.4')
+    gem.add_dependency('erlectricity', '>= 1.1.0')
+    gem.add_dependency('bert', '>= 0.1.0')
+    gem.add_dependency('bertrpc', '>= 0.4.0')
 
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end

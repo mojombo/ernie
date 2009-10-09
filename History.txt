@@ -1,0 +1,3 @@
+=
+  * Major changes
+    * Convert to use BERT gem.
