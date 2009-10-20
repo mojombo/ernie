@@ -12,8 +12,8 @@ begin
     gem.files.include(["ext"])
     gem.extensions << 'ext/extconf.rb'
     gem.add_dependency('erlectricity', '>= 1.1.0')
-    gem.add_dependency('bert', '>= 0.1.0')
-    gem.add_dependency('bertrpc', '>= 0.4.0')
+    gem.add_dependency('bert', '>= 1.0.0')
+    gem.add_dependency('bertrpc', '>= 1.0.0')
 
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end

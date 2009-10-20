@@ -3,20 +3,16 @@ Ernie
 
 By Tom Preston-Werner (tom@mojombo.com)
 
-WARNING: This software is alpha and should not be used in production without
-extensive testing. You should not consider this project production ready until
-it is released as 1.0.
+Ernie is a BERT-RPC server implementation that uses an Erlang server to accept incoming connections, and then delegates the request to Ruby handlers.
 
-
-Description
------------
-
-Ernie is a BERT-RPC server implementation that uses an Erlang server to accept incoming connections, and then delegates the request to a Ruby handler via Erlectricity.
+See the full BERT-RPC specification at [bert-rpc.org](http://bert-rpc.org).
 
 Ernie currently supports the following BERT-RPC features:
 
 * `call` requests
 * `cast` requests
+
+Ernie was developed for GitHub and is currently in production use serving millions of RPC requests every day. The stability and performance have been exemplary.
 
 
 Installation
