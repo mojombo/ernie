@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ernie}
-  s.version = "0.4.0"
+  s.version = "1.0.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tom Preston-Werner"]
-  s.date = %q{2009-10-08}
+  s.date = %q{2009-10-19}
   s.default_executable = %q{ernie}
   s.email = %q{tom@mojombo.com}
   s.executables = ["ernie"]
@@ -67,16 +67,16 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<erlectricity>, [">= 1.1.0"])
-      s.add_runtime_dependency(%q<bert>, [">= 0.1.0"])
-      s.add_runtime_dependency(%q<bertrpc>, [">= 0.4.0"])
+      s.add_runtime_dependency(%q<bert>, [">= 1.0.0"])
+      s.add_runtime_dependency(%q<bertrpc>, [">= 1.0.0"])
     else
       s.add_dependency(%q<erlectricity>, [">= 1.1.0"])
-      s.add_dependency(%q<bert>, [">= 0.1.0"])
-      s.add_dependency(%q<bertrpc>, [">= 0.4.0"])
+      s.add_dependency(%q<bert>, [">= 1.0.0"])
+      s.add_dependency(%q<bertrpc>, [">= 1.0.0"])
     end
   else
     s.add_dependency(%q<erlectricity>, [">= 1.1.0"])
-    s.add_dependency(%q<bert>, [">= 0.1.0"])
-    s.add_dependency(%q<bertrpc>, [">= 0.4.0"])
+    s.add_dependency(%q<bert>, [">= 1.0.0"])
+    s.add_dependency(%q<bertrpc>, [">= 1.0.0"])
   end
 end
