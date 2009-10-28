@@ -11,6 +11,11 @@ class Ernie
   self.current_mod = nil
   self.logger = nil
 
+  # Record a module.
+  #   +name+ is the module Symbol
+  #   +block+ is the Block containing function definitions
+  #
+  # Returns nothing
   def self.mod(name, block)
     m = Mod.new(name)
     self.current_mod = m
@@ -18,69 +23,129 @@ class Ernie
     block.call
   end
 
+  # Record a function.
+  #   +name+ is the function Symbol
+  #   +block+ is the Block to associate
+  #
+  # Returns nothing
   def self.fun(name, block)
     self.current_mod.fun(name, block)
   end
 
+  # Set the logfile to given path.
+  #   +file+ is the String path to the logfile
+  #
+  # Returns nothing
   def self.logfile(file)
     self.logger = Logger.new(file)
   end
 
+  # If logging is enabled, log the given text.
+  #   +text+ is the String to log
+  #
+  # Returns nothing
   def self.log(text)
     self.logger.info(text) if self.logger
   end
 
+  # Dispatch the request to the proper mod:fun.
+  #   +mod+ is the module Symbol
+  #   +fun+ is the function Symbol
+  #   +args+ is the Array of arguments
+  #
+  # Returns the Ruby object response
   def self.dispatch(mod, fun, args)
-    xargs = BERT::Decoder.convert(args)
-    self.log("-- " + [mod, fun, xargs].inspect)
     self.mods[mod] || raise(ServerError.new("No such module '#{mod}'"))
     self.mods[mod].funs[fun] || raise(ServerError.new("No such function '#{mod}:#{fun}'"))
-    res = self.mods[mod].funs[fun].call(*xargs)
-    BERT::Encoder.convert(res)
+    self.mods[mod].funs[fun].call(*args)
   end
 
+  # Read the length header from the wire.
+  #   +input+ is the IO from which to read
+  #
+  # Returns the size Integer if one was read
+  # Returns nil otherwise
+  def self.read_4(input)
+    raw = input.read(4)
+    return nil unless raw
+    raw.unpack('N').first
+  end
+
+  # Read a BERP from the wire and decode it to a Ruby object.
+  #   +input+ is the IO from which to read
+  #
+  # Returns a Ruby object if one could be read
+  # Returns nil otherwise
+  def self.read_berp(input)
+    packet_size = self.read_4(input)
+    return nil unless packet_size
+    bert = input.read(packet_size)
+    BERT.decode(bert)
+  end
+
+  # Write the given Ruby object to the wire as a BERP.
+  #   +output+ is the IO on which to write
+  #   +ruby+ is the Ruby object to encode
+  #
+  # Returns nothing
+  def self.write_berp(output, ruby)
+    data = BERT.encode(ruby)
+    output.write([data.length].pack("N"))
+    output.write(data)
+  end
+
+  # Start the processing loop.
+  #
+  # Loops forever
   def self.start
     self.log("Starting")
     self.log(self.mods.inspect)
-    receive do |f|
-      f.when([:call, Symbol, Symbol, Array]) do |mod, fun, args|
-        self.log("-> " + [:call, mod, fun, args].inspect)
-        begin
-          res = self.dispatch(mod, fun, args)
-          xres = [:reply, res]
-          self.log("<- " + xres.inspect)
-          f.send!(xres)
-        rescue ServerError => e
-          xres = [:error, [:server, 0, e.class.to_s, e.message, e.backtrace]]
-          self.log("<- " + xres.inspect)
-          self.log(e.backtrace.join("\n"))
-          f.send!(xres)
-        rescue Object => e
-          xres = [:error, [:user, 0, e.class.to_s, e.message, e.backtrace]]
-          self.log("<- " + xres.inspect)
-          self.log(e.backtrace.join("\n"))
-          f.send!(xres)
-        end
-        f.receive_loop
+
+    input = IO.new(3)
+    output = IO.new(4)
+    input.sync = true
+    output.sync = true
+
+    loop do
+      iruby = self.read_berp(input)
+      unless iruby
+        puts "Could not read BERP length header. Ernie server may have gone away. Exiting now."
+        exit!
       end
 
-      f.when([:cast, Symbol, Symbol, Array]) do |mod, fun, args|
+      if iruby.size == 4 && iruby[0] == :call
+        mod, fun, args = iruby[1..3]
+        self.log("-> " + iruby.inspect)
+        begin
+          res = self.dispatch(mod, fun, args)
+          oruby = t[:reply, res]
+          self.log("<- " + oruby.inspect)
+          write_berp(output, oruby)
+        rescue ServerError => e
+          oruby = t[:error, t[:server, 0, e.class.to_s, e.message, e.backtrace]]
+          self.log("<- " + oruby.inspect)
+          self.log(e.backtrace.join("\n"))
+          write_berp(output, oruby)
+        rescue Object => e
+          oruby = t[:error, t[:user, 0, e.class.to_s, e.message, e.backtrace]]
+          self.log("<- " + oruby.inspect)
+          self.log(e.backtrace.join("\n"))
+          write_berp(output, oruby)
+        end
+      elsif iruby.size == 4 && iruby[0] == :cast
+        mod, fun, args = iruby[1..3]
         self.log("-> " + [:cast, mod, fun, args].inspect)
         begin
           self.dispatch(mod, fun, args)
         rescue Object => e
           # ignore
         end
-        f.send!([:noreply])
-        f.receive_loop
-      end
-
-      f.when(Any) do |any|
-        self.log("-> " + any.inspect)
-        xres = [:error, [:server, 0, "Invalid request: #{any.inspect}"]]
-        self.log("<- " + xres.inspect)
-        f.send!(xres)
-        f.receive_loop
+        write_berp(output, t[:noreply])
+      else
+        self.log("-> " + iruby.inspect)
+        oruby = t[:error, t[:server, 0, "Invalid request: #{iruby.inspect}"]]
+        self.log("<- " + oruby.inspect)
+        write_berp(output, oruby)
       end
     end
   end

@@ -1,3 +1,8 @@
+=
+  * Major changes
+    * Remove dependency on Erlectricity
+    * Simplify processing loop
+
 = 1.0.0 / 2009-10-19
   * No Changes. Production ready!
 

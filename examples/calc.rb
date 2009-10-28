@@ -14,6 +14,10 @@ mod(:slowcalc) do
     sleep(rand * 2)
     a + b
   end
+
+  fun(:superslow) do
+    sleep 10
+  end
 end
 
 # Throw an error
