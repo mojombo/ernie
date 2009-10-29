@@ -31,6 +31,10 @@ mod(:test) do
     state
   end
 
+  fun(:big) do |x|
+    'a' * x
+  end
+
   fun(:cry) do
     raise "abandon hope!"
   end

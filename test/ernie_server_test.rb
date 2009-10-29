@@ -37,6 +37,10 @@ class ErnieServerTest < Test::Unit::TestCase
         assert_equal 10, @svc.call.test.ternary(5, 2, 3)
       end
 
+      should "handle massive binaries" do
+        assert_equal 8 * 1024 * 1024, @svc.call.test.big(8 * 1024 * 1024).size
+      end
+
       should "get an error on missing module" do
         begin
           @svc.call.failboat.mcfail(:fail)
