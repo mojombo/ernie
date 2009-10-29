@@ -1,4 +1,4 @@
-=
+= 1.1.0 / 2009-10-28
   * Major changes
     * Remove dependency on Erlectricity
     * Simplify processing loop
