@@ -15,8 +15,6 @@ rpc(WrappedPort, Message) ->
   send(WrappedPort, Message),
   receive
     {WrappedPort, Result} -> {ok, Result}
-  after 15000 ->
-    {error, timed_out, WrappedPort}
   end.
 
 send(WrappedPort, Message) ->
