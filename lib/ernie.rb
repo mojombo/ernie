@@ -32,6 +32,22 @@ class Ernie
     self.current_mod.fun(name, block)
   end
 
+  # Expose all public methods in a Ruby module:
+  #   +name+ is the ernie module Symbol
+  #   +mixin+ is the ruby module whose public methods are exposed
+  #
+  # Returns nothing
+  def self.expose(name, mixin)
+    context = Object.new
+    context.extend mixin
+    mod(name, lambda {
+      mixin.public_instance_methods.each do |meth|
+        fun(meth.to_sym, context.method(meth))
+      end
+    })
+    context
+  end
+
   # Set the logfile to given path.
   #   +file+ is the String path to the logfile
   #
