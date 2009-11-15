@@ -5,11 +5,13 @@ require 'logger'
 class Ernie
   class << self
     attr_accessor :mods, :current_mod, :logger
+    attr_accessor :auto_start
   end
 
   self.mods = {}
   self.current_mod = nil
   self.logger = nil
+  self.auto_start = true
 
   # Record a module.
   #   +name+ is the module Symbol
@@ -181,5 +183,5 @@ def logfile(name)
 end
 
 at_exit do
-  Ernie.start unless $test
+  Ernie.start if Ernie.auto_start
 end
