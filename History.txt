@@ -1,4 +1,4 @@
-=
+= 1.2.0 / 2009-11-23
   * API Additions
     * Add Ernie.expose
   * Internal Changes
