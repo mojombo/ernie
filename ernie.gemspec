@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ernie}
-  s.version = "1.1.0"
+  s.version = "1.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tom Preston-Werner"]
-  s.date = %q{2009-10-28}
+  s.date = %q{2009-11-23}
   s.default_executable = %q{ernie}
   s.email = %q{tom@mojombo.com}
   s.executables = ["ernie"]
@@ -37,7 +37,8 @@ Gem::Specification.new do |s|
      "elib/logger_sup.erl",
      "elib/port_wrapper.erl",
      "ernie.gemspec",
-     "examples/calc.rb",
+     "examples/dsl.rb",
+     "examples/expose.rb",
      "ext/Makefile",
      "ext/extconf.rb",
      "lib/ernie.rb",
@@ -58,7 +59,8 @@ Gem::Specification.new do |s|
      "test/handler.rb",
      "test/helper.rb",
      "test/load.rb",
-     "examples/calc.rb"
+     "examples/dsl.rb",
+     "examples/expose.rb"
   ]
 
   if s.respond_to? :specification_version then
