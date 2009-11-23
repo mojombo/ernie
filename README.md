@@ -51,6 +51,8 @@ Running
 Example Handler
 ---------------
 
+Using the DSL:
+
     require 'ernie'
     
     mod(:calc) do
@@ -58,6 +60,18 @@ Example Handler
         a + b
       end
     end
+
+Using Ernie.expose:
+
+    require 'ernie'
+    
+    module Calc
+      def add(a, b)
+        a + b
+      end
+    end
+    
+    Ernie.expose(:calc, Calc)
 
 
 Example BERT-RPC call for above example
