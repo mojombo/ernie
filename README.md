@@ -99,10 +99,14 @@ Contribute
 
 If you'd like to hack on Ernie, start by forking my repo on GitHub:
 
-http://github.com/mojombo/ernie
+    http://github.com/mojombo/ernie
 
-To get all of the dependencies, install the gem first. The best way to get
-your changes merged back into core is as follows:
+To get all of the dependencies, install the gem first. To run ernie from
+source, you must first build the Erlang code:
+
+    rake ebuild
+
+The best way to get your changes merged back into core is as follows:
 
 1. Clone down your fork
 1. Create a topic branch to contain your change
