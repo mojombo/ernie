@@ -32,18 +32,18 @@ Running
         -n, --number NUMBER              Number of handler instances
         -d, --detached                   Run as a daemon
         -P, --pidfile PIDFILE            Location to write pid file.
-    
+
     Commands:
       <none>                Start an Ernie server.
       reload-handlers       Gracefully reload all of the the ruby handlers
                             and use the new code for all subsequent requests.
       stats                 Print a list of connection and handler statistics.
-    
+
     Examples:
       ernie -d -p 9999 -n 10 -h calc.rb
         Start the ernie server in the background on port 9999 with ten
         handlers, using the calc.rb handler file.
-    
+
       ernie reload-handlers -p 9999
         Reload the handlers for the ernie server currently running on
         port 9999.
@@ -66,7 +66,7 @@ Using a Ruby module and Ernie.expose:
 Using the DSL (this will be deprecated in a future release):
 
     require 'ernie'
-    
+
     mod(:calc) do
       fun(:add) do |a, b|
         a + b
@@ -91,7 +91,7 @@ Example BERT-RPC call for above example
 ---------------------------------------
 
     -> {call, calc, add, [1, 2]}
-    
+
     <- {reply, 3}
 
 
@@ -101,7 +101,7 @@ Using the BERTRPC gem to make calls to Ernie
 You can make BERT-RPC calls from Ruby with the [BERTRPC gem](http://github.com/mojombo/bertrpc):
 
     require 'bertrpc'
-    
+
     svc = BERTRPC::Service.new('localhost', 8000)
     svc.call.calc.add(1, 2)
     # => 3

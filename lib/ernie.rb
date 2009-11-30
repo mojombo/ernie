@@ -180,6 +180,7 @@ class Ernie::Mod
   end
 
   def fun(name, block)
+    raise TypeError, "block required" if block.nil?
     self.funs[name] = block
   end
 end
