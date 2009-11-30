@@ -51,17 +51,7 @@ Running
 Example Handler
 ---------------
 
-Using the DSL:
-
-    require 'ernie'
-    
-    mod(:calc) do
-      fun(:add) do |a, b|
-        a + b
-      end
-    end
-
-Using Ernie.expose:
+Using a Ruby module and Ernie.expose:
 
     require 'ernie'
     
@@ -72,6 +62,16 @@ Using Ernie.expose:
     end
     
     Ernie.expose(:calc, Calc)
+    
+Using the DSL (this will be deprecated in a future release):
+
+    require 'ernie'
+    
+    mod(:calc) do
+      fun(:add) do |a, b|
+        a + b
+      end
+    end
 
 
 Logging
