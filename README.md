@@ -74,6 +74,19 @@ Using Ernie.expose:
     Ernie.expose(:calc, Calc)
 
 
+Logging
+-------
+
+You can have logging sent to a file by adding these lines to your handler:
+
+    logfile('/var/log/ernie.log')
+    loglevel(Logger::INFO)
+
+This will log startup info, requests, and error messages to the log. Choosing
+Logger::DEBUG will include the response (be careful, doing this can generate
+very large log files).
+
+
 Example BERT-RPC call for above example
 ---------------------------------------
 

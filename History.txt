@@ -1,3 +1,9 @@
+=
+  * API Additions
+    * Add loglevel for setting log level
+  * Major changes
+    * Better logging granularity
+
 = 1.2.0 / 2009-11-23
   * API Additions
     * Add Ernie.expose
