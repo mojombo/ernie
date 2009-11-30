@@ -87,6 +87,15 @@ Logger::DEBUG will include the response (be careful, doing this can generate
 very large log files).
 
 
+Autostart
+---------
+
+Normally Ernie handlers will become active after the file has been loaded in.
+you can disable this behavior by setting:
+
+    Ernie.auto_start = false
+
+
 Example BERT-RPC call for above example
 ---------------------------------------
 

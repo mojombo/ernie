@@ -1,6 +1,7 @@
 =
   * API Additions
     * Add loglevel for setting log level
+    * Add Ernie.auto_start bool
   * Major changes
     * Better logging granularity
 
