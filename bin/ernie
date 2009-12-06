@@ -42,16 +42,12 @@ OptionParser.new do |opts|
   opts.banner = help
   opts.version = version
 
-  opts.on("-h HANDLER", "--handler HANDLER", "Handler ruby file") do |x|
-    options[:handler] = x
+  opts.on("-c CONFIG", "--config CONFIG", "Config file") do |x|
+    options[:config] = x
   end
 
   opts.on("-p PORT", "--port PORT", "Port") do |x|
     options[:port] = x
-  end
-
-  opts.on("-n NUMBER", "--number NUMBER", "Number of handler instances") do |x|
-    options[:number] = x
   end
 
   opts.on("-l LOGLEVEL", "--log-level LOGLEVEL", "Log level (0-4)") do |x|
@@ -81,14 +77,13 @@ if command = ARGV[0]
   svc = BERTRPC::Service.new('localhost', port)
   puts svc.call.__admin__.send(command.gsub(/-/, '_'))
 else
-  if !options[:handler]
-    puts "A handler must be specified: ernie -h /path/to/handler.rb"
+  if !options[:config]
+    puts "A config file must be specified: ernie -c /path/to/config.yml"
     exit(1)
   end
 
-  handler = options[:handler]
+  config = options[:config]
   port = options[:port] || DEFAULT_PORT
-  number = options[:number] || 1
   log_level = options[:log_level] || 2
   pidfile = options[:pidfile] ? "-ernie_server_app pidfile \"'#{options[:pidfile]}'\"" : ''
   detached = options[:detached] ? '-detached' : ''
@@ -101,8 +96,7 @@ else
                #{code_paths}
                #{pidfile} \
                -ernie_server_app port #{port} \
-               -ernie_server_app handler '"#{handler}"' \
-               -ernie_server_app number #{number} \
+               -ernie_server_app config '"#{config}"' \
                -ernie_server_app log_level #{log_level} \
                -run ernie_server_app boot}.squeeze(' ')
   puts cmd

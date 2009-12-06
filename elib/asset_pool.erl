@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 %% api
--export([start_link/1, start/1, lease/0, return/1, reload_assets/0, idle_worker_count/0]).
+-export([start_link/2, lease/1, return/2, reload_assets/1, idle_worker_count/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -16,23 +16,20 @@
 %% API
 %%====================================================================
 
-start_link(Args) ->
-  gen_server:start_link({global, ?MODULE}, ?MODULE, Args, []).
+start_link(Handler, Count) ->
+  gen_server:start_link(?MODULE, [Handler, Count], []).
 
-start(Args) ->
-  gen_server:start({global, ?MODULE}, ?MODULE, Args, []).
+lease(Pid) ->
+  gen_server:call(Pid, lease).
 
-lease() ->
-  gen_server:call({global, ?MODULE}, {lease}).
+return(Pid, Asset) ->
+  gen_server:call(Pid, {return, Asset}).
 
-return(Asset) ->
-  gen_server:call({global, ?MODULE}, {return, Asset}).
+reload_assets(Pid) ->
+  gen_server:call(Pid, {reload_assets}).
 
-reload_assets() ->
-  gen_server:call({global, ?MODULE}, {reload_assets}).
-
-idle_worker_count() ->
-  gen_server:call({global, ?MODULE}, {idle_worker_count}).
+idle_worker_count(Pid) ->
+  gen_server:call(Pid, {idle_worker_count}).
 
 %%====================================================================
 %% gen_server callbacks
@@ -45,11 +42,12 @@ idle_worker_count() ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init([Count, Handler]) ->
+init([Handler, Count]) ->
   process_flag(trap_exit, true),
   error_logger:info_msg("~p starting~n", [?MODULE]),
   Token = make_ref(),
   Assets = start_handlers(Count, Handler, Token),
+  logger:debug("Assets = ~p~n", [Assets]),
   {ok, #state{assets = Assets, handler = Handler, token = Token}}.
 
 %%--------------------------------------------------------------------
@@ -61,7 +59,8 @@ init([Count, Handler]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call({lease}, _From, State) ->
+handle_call(lease, _From, State) ->
+  logger:debug("Leasing...~n", []),
   Token = State#state.token,
   case queue:out(State#state.assets) of
     {{value, Asset}, Assets2} ->
@@ -140,4 +139,4 @@ start_handlers(Assets, Count, Handler, Token) ->
   start_handlers(Assets2, Count - 1, Handler, Token).
 
 create_asset(Handler, Token) ->
-  {asset, port_wrapper:wrap_link("ruby " ++ Handler), Token}.
+  {asset, port_wrapper:wrap_link(Handler), Token}.

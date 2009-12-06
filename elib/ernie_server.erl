@@ -10,7 +10,8 @@
 
 -record(state, {lsock = undefined,
                 pending = queue:new(),
-                count = 0}).
+                count = 0,
+                map = undefined}).
 
 -record(request, {sock = undefined,
                   info = undefined,
@@ -43,12 +44,14 @@ asset_freed() ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init([Port]) ->
+init([Port, Configs]) ->
   process_flag(trap_exit, true),
   error_logger:info_msg("~p starting~n", [?MODULE]),
   {ok, LSock} = try_listen(Port, 500),
   spawn(fun() -> loop(LSock) end),
-  {ok, #state{lsock = LSock}}.
+  Map = init_map(Configs),
+  io:format("pidmap = ~p~n", [Map]),
+  {ok, #state{lsock = LSock, map = Map}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -73,19 +76,11 @@ handle_cast({process, Sock}, State) ->
   State2 = receive_term(Request, State),
   {noreply, State2};
 handle_cast({asset_freed}, State) ->
-  case queue:is_empty(State#state.pending) of
-    false ->
-      case asset_pool:lease() of
-        {ok, Asset} ->
-          {{value, Request}, Pending2} = queue:out(State#state.pending),
-          % io:format("d", []),
-          spawn(fun() -> process_now(Request, Asset) end),
-          {noreply, State#state{pending = Pending2}};
-        empty ->
-          % io:format(".", []),
-          {noreply, State}
-      end;
-    true ->
+  case queue:out(State#state.pending) of
+    {{value, Request}, Pending2} ->
+      State2 = process_request(Request, State#state{pending = Pending2}),
+      {noreply, State2};
+    {empty, _Pending} ->
       {noreply, State}
   end;
 handle_cast(_Msg, State) -> {noreply, State}.
@@ -100,6 +95,14 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %%====================================================================
 %% Internal
 %%====================================================================
+
+extract_mapping(Config) ->
+  Pid = proplists:get_value(pid, Config),
+  Mods = proplists:get_value(modules, Config),
+  lists:map(fun(X) -> {X, Pid} end, Mods).
+
+init_map(Configs) ->
+  lists:foldl(fun(X, Acc) -> Acc ++ extract_mapping(X) end, [], Configs).
 
 try_listen(Port, 0) ->
   error_logger:error_msg("Could not listen on port ~p~n", [Port]),
@@ -166,45 +169,64 @@ receive_term(Request, State) ->
 
 process_request(Request, State) ->
   ActionTerm = binary_to_term(Request#request.action),
+  close_if_cast(ActionTerm, Request),
+  {_Type, Mod, _Fun, _Args} = ActionTerm,
+  Pid = proplists:get_value(Mod, State#state.map),
+  case Pid of
+    undefined ->
+      logger:debug("Dispatching to native module~n", []),
+      process_native_request(Request, State);
+    ValidPid ->
+      logger:debug("Found extern pid ~p~n", [ValidPid]),
+      process_extern_request(ValidPid, Request, State)
+  end.
+
+close_if_cast(ActionTerm, Request) ->
   case ActionTerm of
     {cast, _Mod, _Fun, _Args} ->
       Sock = Request#request.sock,
       gen_tcp:send(Sock, term_to_binary({noreply})),
       ok = gen_tcp:close(Sock),
-      logger:debug("Closing cast.~n", []);
+      logger:debug("Closed cast.~n", []);
     _Any ->
       ok
-  end,
-  case queue:is_empty(State#state.pending) of
-    false ->
-      Pending2 = queue:in(Request, State#state.pending),
-      % io:format("Q", []),
-      State#state{pending = Pending2};
-    true ->
-      try_process_now(Request, State)
   end.
 
-try_process_now(Request, State) ->
+process_native_request(_Request, State) ->
+  State.
+
+process_extern_request(Pid, Request, State) ->
+  case queue:is_empty(State#state.pending) of
+    false ->
+      logger:debug("Pre queueing request for pool ~p~n", [Pid]),
+      Pending2 = queue:in(Request, State#state.pending),
+      State#state{pending = Pending2};
+    true ->
+      try_process_now(Pid, Request, State)
+  end.
+
+try_process_now(Pid, Request, State) ->
   Count = State#state.count,
   State2 = State#state{count = Count + 1},
-  case asset_pool:lease() of
+  logger:debug("Count = ~p~n", [Count + 1]),
+  case asset_pool:lease(Pid) of
     {ok, Asset} ->
-      % io:format("i", []),
-      spawn(fun() -> process_now(Request, Asset) end),
+      logger:debug("Leased asset for pool ~p~n", [Pid]),
+      spawn(fun() -> process_now(Pid, Request, Asset) end),
       State2;
     empty ->
-      % io:format("q", []),
+      logger:debug("Post queueing request for pool ~p~n", [Pid]),
       Pending2 = queue:in(Request, State#state.pending),
       State2#state{pending = Pending2}
   end.
 
-process_now(Request, Asset) ->
+process_now(Pid, Request, Asset) ->
   try unsafe_process_now(Request, Asset) of
     _AnyResponse -> ok
   catch
     _AnyError -> ok
   after
-    asset_pool:return(Asset),
+    asset_pool:return(Pid, Asset),
     ernie_server:asset_freed(),
     gen_tcp:close(Request#request.sock)
   end.
