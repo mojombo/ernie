@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 %% api
--export([start_link/1, start/1, process/1, asset_freed/0]).
+-export([start_link/1, start/1, process/1, kick/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -30,8 +30,8 @@ start(Args) ->
 process(Sock) ->
   gen_server:cast({global, ?MODULE}, {process, Sock}).
 
-asset_freed() ->
-  gen_server:cast({global, ?MODULE}, {asset_freed}).
+kick() ->
+  gen_server:cast({global, ?MODULE}, kick).
 
 %%====================================================================
 %% gen_server callbacks
@@ -75,10 +75,10 @@ handle_cast({process, Sock}, State) ->
   Request = #request{sock = Sock},
   State2 = receive_term(Request, State),
   {noreply, State2};
-handle_cast({asset_freed}, State) ->
+handle_cast(kick, State) ->
   case queue:out(State#state.pending) of
     {{value, Request}, Pending2} ->
-      State2 = process_request(Request, State#state{pending = Pending2}),
+      State2 = process_request(Request, Pending2, State),
       {noreply, State2};
     {empty, _Pending} ->
       {noreply, State}
@@ -160,16 +160,18 @@ receive_term(Request, State) ->
           receive_term(Request2, State);
         _Any ->
           Request2 = Request#request{action = BinaryTerm},
-          process_request(Request2, State)
+          close_if_cast(Term, Request2),
+          Pending2 = queue:in(Request2, State#state.pending),
+          ernie_server:kick(),
+          State#state{pending = Pending2}
       end;
     {error, closed} ->
       ok = gen_tcp:close(Sock),
       State
   end.
 
-process_request(Request, State) ->
+process_request(Request, Pending2, State) ->
   ActionTerm = binary_to_term(Request#request.action),
-  close_if_cast(ActionTerm, Request),
   {_Type, Mod, _Fun, _Args} = ActionTerm,
   Pid = proplists:get_value(Mod, State#state.map),
   case Pid of
@@ -178,7 +180,7 @@ process_request(Request, State) ->
       process_native_request(ActionTerm, Request, State);
     ValidPid when is_pid(ValidPid) ->
       logger:debug("Found extern pid ~p~n", [ValidPid]),
-      process_extern_request(ValidPid, Request, State);
+      process_extern_request(ValidPid, Request, Pending2, State);
     undefined ->
       Sock = Request#request.sock,
       gen_tcp:send(Sock, term_to_binary({error})),
@@ -204,17 +206,7 @@ process_native_request(ActionTerm, Request, State) ->
   spawn(fun() -> native:process(ActionTerm, Request) end),
   State2.
 
-process_extern_request(Pid, Request, State) ->
-  case queue:is_empty(State#state.pending) of
-    false ->
-      logger:debug("Pre queueing request for pool ~p~n", [Pid]),
-      Pending2 = queue:in(Request, State#state.pending),
-      State#state{pending = Pending2};
-    true ->
-      try_process_now(Pid, Request, State)
-  end.
-
-try_process_now(Pid, Request, State) ->
+process_extern_request(Pid, Request, Pending2, State) ->
   Count = State#state.count,
   State2 = State#state{count = Count + 1},
   logger:debug("Count = ~p~n", [Count + 1]),
@@ -222,11 +214,9 @@ try_process_now(Pid, Request, State) ->
     {ok, Asset} ->
       logger:debug("Leased asset for pool ~p~n", [Pid]),
       spawn(fun() -> process_now(Pid, Request, Asset) end),
-      State2;
+      State2#state{pending = Pending2};
     empty ->
-      logger:debug("Post queueing request for pool ~p~n", [Pid]),
-      Pending2 = queue:in(Request, State#state.pending),
-      State2#state{pending = Pending2}
+      State
   end.
 
 process_now(Pid, Request, Asset) ->
@@ -236,7 +226,7 @@ process_now(Pid, Request, Asset) ->
     _AnyError -> ok
   after
     asset_pool:return(Pid, Asset),
-    ernie_server:asset_freed(),
+    ernie_server:kick(),
     gen_tcp:close(Request#request.sock)
   end.
 
