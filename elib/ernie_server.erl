@@ -8,14 +8,15 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--record(state, {lsock = undefined,
-                pending = queue:new(),
-                count = 0,
-                map = undefined}).
+-record(state, {lsock = undefined,      % the listen socket
+                hq = queue:new(),       % high priority queue
+                lq = queue:new(),       % low priority queue
+                count = 0,              % total request count
+                map = undefined}).      % module map. tuples of {Mod, Id}
 
--record(request, {sock = undefined,
-                  info = undefined,
-                  action = undefined}).
+-record(request, {sock = undefined,     % connection socket
+                  info = undefined,     % info binary (if any)
+                  action = undefined}). % action binary
 
 %%====================================================================
 %% API
@@ -76,12 +77,18 @@ handle_cast({process, Sock}, State) ->
   State2 = receive_term(Request, State),
   {noreply, State2};
 handle_cast(kick, State) ->
-  case queue:out(State#state.pending) of
-    {{value, Request}, Pending2} ->
-      State2 = process_request(Request, Pending2, State),
+  case queue:out(State#state.hq) of
+    {{value, Request}, Hq2} ->
+      State2 = process_request(Request, hq, Hq2, State),
       {noreply, State2};
-    {empty, _Pending} ->
-      {noreply, State}
+    {empty, _Hq} ->
+      case queue:out(State#state.lq) of
+        {{value, Request}, Lq2} ->
+          State2 = process_request(Request, lq, Lq2, State),
+          {noreply, State2};
+        {empty, _Lq} ->
+          {noreply, State}
+      end
   end;
 handle_cast(_Msg, State) -> {noreply, State}.
 
@@ -141,26 +148,26 @@ receive_term(Request, State) ->
         _Any ->
           Request2 = Request#request{action = BinaryTerm},
           close_if_cast(Term, Request2),
-          Pending2 = queue:in(Request2, State#state.pending),
+          Hq2 = queue:in(Request2, State#state.hq),
           ernie_server:kick(),
-          State#state{pending = Pending2}
+          State#state{hq = Hq2}
       end;
     {error, closed} ->
       ok = gen_tcp:close(Sock),
       State
   end.
 
-process_request(Request, Pending2, State) ->
+process_request(Request, Priority, Q2, State) ->
   ActionTerm = binary_to_term(Request#request.action),
   {_Type, Mod, _Fun, _Args} = ActionTerm,
   Pid = proplists:get_value(Mod, State#state.map),
   case Pid of
     native ->
       logger:debug("Dispatching to native module~n", []),
-      process_native_request(ActionTerm, Request, Pending2, State);
+      process_native_request(ActionTerm, Request, Priority, Q2, State);
     ValidPid when is_pid(ValidPid) ->
       logger:debug("Found extern pid ~p~n", [ValidPid]),
-      process_extern_request(ValidPid, Request, Pending2, State);
+      process_extern_request(ValidPid, Request, Priority, Q2, State);
     undefined ->
       logger:debug("No such module ~p~n", [Mod]),
       Sock = Request#request.sock,
@@ -182,14 +189,17 @@ close_if_cast(ActionTerm, Request) ->
       ok
   end.
 
-process_native_request(ActionTerm, Request, Pending2, State) ->
+process_native_request(ActionTerm, Request, Priority, Q2, State) ->
   Count = State#state.count,
   State2 = State#state{count = Count + 1},
   logger:debug("Count = ~p~n", [Count + 1]),
   spawn(fun() -> native:process(ActionTerm, Request) end),
-  State2#state{pending = Pending2}.
+  case Priority of
+    hq -> State2#state{hq = Q2};
+    lq -> State2#state{lq = Q2}
+  end.
 
-process_extern_request(Pid, Request, Pending2, State) ->
+process_extern_request(Pid, Request, Priority, Q2, State) ->
   Count = State#state.count,
   State2 = State#state{count = Count + 1},
   logger:debug("Count = ~p~n", [Count + 1]),
@@ -197,7 +207,10 @@ process_extern_request(Pid, Request, Pending2, State) ->
     {ok, Asset} ->
       logger:debug("Leased asset for pool ~p~n", [Pid]),
       spawn(fun() -> process_now(Pid, Request, Asset) end),
-      State2#state{pending = Pending2};
+      case Priority of
+        hq -> State2#state{hq = Q2};
+        lq -> State2#state{lq = Q2}
+      end;
     empty ->
       State
   end.

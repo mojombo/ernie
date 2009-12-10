@@ -1,10 +1,11 @@
 -module(ernie_admin).
 -export([process/4]).
 
--record(state, {lsock = undefined,
-                pending = queue:new(),
-                count = 0,
-                map = undefined}).
+-record(state, {lsock = undefined,      % the listen socket
+                hq = queue:new(),       % high priority queue
+                lq = queue:new(),       % low priority queue
+                count = 0,              % total request count
+                map = undefined}).      % module map. tuples of {Mod, Id}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Process entry point
@@ -52,8 +53,10 @@ stat(idle, State) ->
   IdleMap = lists:map((fun idle/1), State#state.map),
   list_to_binary(IdleMap);
 stat(queue, State) ->
-  QueueLength = queue:len(State#state.pending),
-  list_to_binary([<<"connections.pending=">>, integer_to_list(QueueLength), <<"\n">>]).
+  HighQueueLength = queue:len(State#state.hq),
+  LowQueueLength = queue:len(State#state.lq),
+  list_to_binary([<<"queue.high=">>, integer_to_list(HighQueueLength), <<"\n">>,
+                  <<"queue.low=">>, integer_to_list(LowQueueLength), <<"\n">>]).
 
 idle({Mod, native}) ->
   list_to_binary([<<"workers.idle.">>, atom_to_list(Mod), <<"=native\n">>]);
