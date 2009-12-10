@@ -27,9 +27,10 @@ Running
 -------
 
     Usage: ernie [command] [options]
-        -c, --config CONFIG              Config file
-        -p, --port PORT                  Port
-        -d, --detached                   Run as a daemon
+        -c, --config CONFIG              Config file.
+        -p, --port PORT                  Port.
+        -l, --log-level                  Log level (0-4).
+        -d, --detached                   Run as a daemon.
         -P, --pidfile PIDFILE            Location to write pid file.
 
     Commands:

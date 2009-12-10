@@ -11,7 +11,7 @@ class Ernie
   self.mods = {}
   self.current_mod = nil
   self.log = Logger.new(STDOUT)
-  self.log.level = Logger::INFO
+  self.log.level = Logger::FATAL
   self.auto_start = true
 
   # Record a module.

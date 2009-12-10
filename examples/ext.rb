@@ -1,8 +1,6 @@
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'ernie'
 
-loglevel(Logger::FATAL)
-
 module Ext
   # Add two numbers together
   def add(a, b)
