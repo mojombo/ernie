@@ -11,15 +11,15 @@ load_single(Config) ->
     native ->
       verify(native, Config),
       CodePaths = proplists:get_value(codepaths, Config),
-      lists:each(fun(X) -> code:add_patha(X) end, CodePaths),
-      Config;
+      lists:map((fun code:add_patha/1), CodePaths),
+      [{id, native} | Config];
     extern ->
       verify(extern, Config),
       Handler = proplists:get_value(command, Config),
       Number = proplists:get_value(count, Config),
       {ok, SupPid} = asset_pool_sup:start_link(Handler, Number),
       [{_Id, ChildPid, _Type, _Modules}] = supervisor:which_children(SupPid),
-      [{pid, ChildPid} | Config]
+      [{id, ChildPid} | Config]
   end.
 
 verify(native, _Config) ->

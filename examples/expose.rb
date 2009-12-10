@@ -1,7 +1,7 @@
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'ernie'
 
-module Test
+module Expose
   # Add two numbers together
   def add(a, b)
     a + b
@@ -24,4 +24,4 @@ module Test
   end
 end
 
-Ernie.expose(:test, Test)
+Ernie.expose(:expose, Expose)

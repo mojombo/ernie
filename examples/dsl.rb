@@ -2,9 +2,9 @@ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'ernie'
 
 # logfile('/tmp/ernie.log')
-# loglevel(Logger::INFO)
+loglevel(Logger::FATAL)
 
-mod(:test) do
+mod(:dsl) do
   # Add two numbers together
   fun(:add) do |a, b|
     a + b

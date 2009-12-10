@@ -97,9 +97,9 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %%====================================================================
 
 extract_mapping(Config) ->
-  Pid = proplists:get_value(pid, Config),
+  Id = proplists:get_value(id, Config),
   Mods = proplists:get_value(modules, Config),
-  lists:map(fun(X) -> {X, Pid} end, Mods).
+  lists:map(fun(X) -> {X, Id} end, Mods).
 
 init_map(Configs) ->
   lists:foldl(fun(X, Acc) -> Acc ++ extract_mapping(X) end, [], Configs).
@@ -173,12 +173,17 @@ process_request(Request, State) ->
   {_Type, Mod, _Fun, _Args} = ActionTerm,
   Pid = proplists:get_value(Mod, State#state.map),
   case Pid of
-    undefined ->
+    native ->
       logger:debug("Dispatching to native module~n", []),
-      process_native_request(Request, State);
-    ValidPid ->
+      process_native_request(ActionTerm, Request, State);
+    ValidPid when is_pid(ValidPid) ->
       logger:debug("Found extern pid ~p~n", [ValidPid]),
-      process_extern_request(ValidPid, Request, State)
+      process_extern_request(ValidPid, Request, State);
+    undefined ->
+      Sock = Request#request.sock,
+      gen_tcp:send(Sock, term_to_binary({error})),
+      ok = gen_tcp:close(Sock),
+      State
   end.
 
 close_if_cast(ActionTerm, Request) ->
@@ -192,8 +197,12 @@ close_if_cast(ActionTerm, Request) ->
       ok
   end.
 
-process_native_request(_Request, State) ->
-  State.
+process_native_request(ActionTerm, Request, State) ->
+  Count = State#state.count,
+  State2 = State#state{count = Count + 1},
+  logger:debug("Count = ~p~n", [Count + 1]),
+  spawn(fun() -> native:process(ActionTerm, Request) end),
+  State2.
 
 process_extern_request(Pid, Request, State) ->
   case queue:is_empty(State#state.pending) of
