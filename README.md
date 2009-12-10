@@ -27,9 +27,8 @@ Running
 -------
 
     Usage: ernie [command] [options]
-        -h, --handler HANDLER            Handler file
+        -c, --config CONFIG              Config file
         -p, --port PORT                  Port
-        -n, --number NUMBER              Number of handler instances
         -d, --detached                   Run as a daemon
         -P, --pidfile PIDFILE            Location to write pid file.
 
@@ -40,16 +39,75 @@ Running
       stats                 Print a list of connection and handler statistics.
 
     Examples:
-      ernie -d -p 9999 -n 10 -h calc.rb
-        Start the ernie server in the background on port 9999 with ten
-        handlers, using the calc.rb handler file.
+      ernie -d -p 9999 -c example.cfg
+        Start the ernie server in the background on port 9999 using the
+        example.cfg configuration file.
 
       ernie reload-handlers -p 9999
         Reload the handlers for the ernie server currently running on
         port 9999.
 
-Example Handler
----------------
+
+Configuration File
+------------------
+
+Ernie configuration files are written as a series of Erlang terms. Each term is a list of 2-tuples that specify options for a set of modules.
+
+The form for native modules is:
+
+    [{modules, Modules},
+     {type, native},
+     {codepaths, CodePaths}].
+
+Where Modules is a list of atoms corresponding to the module names and
+CodePaths is a list of strings representing the file paths that should be
+added to the runtime's code path. These paths will be prepended to the code
+path and must include the native module's directory and the directories of any
+other dependencies.
+
+The form for external modules is:
+
+    [{modules, Modules},
+     {type, extern},
+     {command, Command},
+     {count, Count}].
+
+Where Modules is a list of atoms corresponding to the module names, Command is
+a string specifying the command to be executed in order to start a worker, and
+Count is the number of workers to spawn.
+
+
+Example Configuration File
+--------------------------
+
+The following example config file informs Ernie of two modules. The first term
+identifies a native module 'nat' that resides in a .beam file under the
+'/path/to/app/ebin' directory. The second term specifies an external module
+'ext' that will have 2 workers started with the command 'ruby
+/path/to/app/ernie/ext.rb'.
+
+    [{modules, [nat]},
+     {type, native},
+     {codepaths, ["/path/to/app/ebin"]}].
+
+    [{modules, [ext]},
+     {type, extern},
+     {command, "ruby /path/to/app/ernie/ext.rb"},
+     {count, 2}].
+
+
+Example Native (Erlang) Handler
+-------------------------------
+
+    -module(nat).
+    -export([add/2]).
+
+    add(A, B) ->
+      A + B.
+
+
+Example External (Ruby) Handler
+-------------------------------
 
 Using a Ruby module and Ernie.expose:
 
@@ -62,16 +120,6 @@ Using a Ruby module and Ernie.expose:
     end
     
     Ernie.expose(:calc, Calc)
-    
-Using the DSL (this will be deprecated in a future release):
-
-    require 'ernie'
-
-    mod(:calc) do
-      fun(:add) do |a, b|
-        a + b
-      end
-    end
 
 
 Logging
