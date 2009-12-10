@@ -162,8 +162,11 @@ process_request(Request, Pending2, State) ->
       logger:debug("Found extern pid ~p~n", [ValidPid]),
       process_extern_request(ValidPid, Request, Pending2, State);
     undefined ->
+      logger:debug("No such module ~p~n", [Mod]),
       Sock = Request#request.sock,
-      gen_tcp:send(Sock, term_to_binary({error})),
+      Class = <<"ServerError">>,
+      Message = list_to_binary(io_lib:format("No such module '~p'", [Mod])),
+      gen_tcp:send(Sock, term_to_binary({error, [server, 0, Class, Message, []]})),
       ok = gen_tcp:close(Sock),
       State
   end.
