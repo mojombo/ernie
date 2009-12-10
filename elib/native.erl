@@ -1,9 +1,10 @@
 -module(native).
 -export([process/2]).
 
--record(request, {sock = undefined,
-                  info = undefined,
-                  action = undefined}).
+-record(request, {sock = undefined,     % connection socket
+                  infos = [],           % list of info binaries
+                  action = undefined,   % action binary
+                  priority = high}).    % priority [ high | low ]
 
 process(ActionTerm, Request) ->
   {_Type, Mod, Fun, Args} = ActionTerm,

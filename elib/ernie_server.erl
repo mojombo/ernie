@@ -15,8 +15,9 @@
                 map = undefined}).      % module map. tuples of {Mod, Id}
 
 -record(request, {sock = undefined,     % connection socket
-                  info = undefined,     % info binary (if any)
-                  action = undefined}). % action binary
+                  infos = [],           % list of info binaries
+                  action = undefined,   % action binary
+                  priority = high}).    % priority [ high | low ]
 
 %%====================================================================
 %% API
@@ -151,20 +152,35 @@ receive_term(Request, State) ->
       case Term of
         {call, '__admin__', Fun, Args} ->
           ernie_admin:process(Sock, Fun, Args, State);
-        {info, _Command, _Args} ->
-          Request2 = Request#request{info = BinaryTerm},
-          receive_term(Request2, State);
+        {info, Command, Args} ->
+          Infos = Request#request.infos,
+          Infos2 = [BinaryTerm | Infos],
+          Request2 = Request#request{infos = Infos2},
+          Request3 = process_info(Request2, Command, Args),
+          receive_term(Request3, State);
         _Any ->
           Request2 = Request#request{action = BinaryTerm},
           close_if_cast(Term, Request2),
-          Hq2 = queue:in(Request2, State#state.hq),
+          case Request2#request.priority of
+            high ->
+              Hq2 = queue:in(Request2, State#state.hq),
+              Lq2 = State#state.lq;
+            low ->
+              Hq2 = State#state.hq,
+              Lq2 = queue:in(Request2, State#state.lq)
+          end,
           ernie_server:kick(),
-          State#state{hq = Hq2}
+          State#state{hq = Hq2, lq = Lq2}
       end;
     {error, closed} ->
       ok = gen_tcp:close(Sock),
       State
   end.
+
+process_info(Request, priority, [Priority]) ->
+  Request#request{priority = Priority};
+process_info(Request, _Command, _Args) ->
+  Request.
 
 process_request(Request, Priority, Q2, State) ->
   ActionTerm = binary_to_term(Request#request.action),
