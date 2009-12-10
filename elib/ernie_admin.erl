@@ -6,10 +6,11 @@
                 count = 0,
                 map = undefined}).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Process entry point
+
 process(Sock, reload_handlers, _Args, State) ->
-  asset_pool:reload_assets(),
-  gen_tcp:send(Sock, term_to_binary({reply, <<"Handlers reloaded.">>})),
-  ok = gen_tcp:close(Sock),
+  spawn(fun() -> process_reload_assets(Sock, State) end),
   State;
 process(Sock, stats, _Args, State) ->
   spawn(fun() -> process_stats(Sock, State) end),
@@ -18,6 +19,22 @@ process(Sock, _Fun, _Args, State) ->
   gen_tcp:send(Sock, term_to_binary({reply, <<"Admin function not supported.">>})),
   ok = gen_tcp:close(Sock),
   State.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Reload handlers
+
+process_reload_assets(Sock, State) ->
+  lists:map((fun reload/1), State#state.map),
+  gen_tcp:send(Sock, term_to_binary({reply, <<"Handlers reloaded.">>})),
+  ok = gen_tcp:close(Sock).
+
+reload({_Mod, native}) ->
+  ok;
+reload({_Mod, Pid}) ->
+  asset_pool:reload_assets(Pid).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Stats
 
 process_stats(Sock, State) ->
   CountString = stat(count, State),
