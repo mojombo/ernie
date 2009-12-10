@@ -1,21 +1,23 @@
-% erlc *.erl && erl ebench.beam -run ebench start 10000 20
+% erlc *.erl && erl ebench.beam -run ebench start 10000 20 ext add
 
 -module(ebench).
 -export([start/1]).
 
-start([Ni, Ci]) ->
+start([Ni, Ci, Modi, Funi]) ->
   Nt = list_to_integer(Ni),
   C = list_to_integer(Ci),
+  Mod = list_to_atom(Modi),
+  Fun = list_to_atom(Funi),
   N = round(Nt / C),
   T0 = erlang:now(),
   Waiter = spawn(fun() -> wait(T0, N * C) end),
-  spawner(Waiter, N, C).
+  spawner(Waiter, N, C, Mod, Fun).
 
-spawner(_Waiter, _N, 0) ->
+spawner(_Waiter, _N, 0, _Mod, _Fun) ->
   ok;
-spawner(Waiter, N, C) ->
-  spawn(fun() -> loop(Waiter, N) end),
-  spawner(Waiter, N, C - 1).
+spawner(Waiter, N, C, Mod, Fun) ->
+  spawn(fun() -> loop(Waiter, N, Mod, Fun) end),
+  spawner(Waiter, N, C - 1, Mod, Fun).
 
 % X is the total number of responses to wait for
 wait(T0, XTotal, 0) ->
@@ -33,22 +35,23 @@ wait(T0, XTotal, X) ->
 wait(T0, X) ->
   wait(T0, X, X).
 
-loop(_Waiter, 0) ->
+loop(_Waiter, 0, _Mod, _Fun) ->
   ok;
-loop(Waiter, N) ->
-  hit(Waiter),
-  loop(Waiter, N - 1).
+loop(Waiter, N, Mod, Fun) ->
+  hit(Waiter, Mod, Fun),
+  loop(Waiter, N - 1, Mod, Fun).
 
-hit(Waiter) ->
+hit(Waiter, Mod, Fun) ->
   % io:format("outgoing!~n", []),
   Host = "localhost",
   {ok, Sock} = gen_tcp:connect(Host, 8000, [binary, {packet, 4}]),
-  Request = term_to_binary({call, ext, add, [1, 2]}),
+  Request = term_to_binary({call, Mod, Fun, args(Fun)}),
   ok = gen_tcp:send(Sock, Request),
   receive
     {tcp, _Port, Reply} ->
       % io:format("~p~n", [Reply]),
-      {reply, 3} = binary_to_term(Reply),
+      Res = res(Fun),
+      {reply, Res} = binary_to_term(Reply),
       Waiter ! done,
       ok;
     Any ->
@@ -57,3 +60,9 @@ hit(Waiter) ->
       ok
   end,
   ok = gen_tcp:close(Sock).
+
+args(add) -> [1, 2];
+args(fib) -> [20].
+
+res(add) -> 3;
+res(fib) -> 10946.

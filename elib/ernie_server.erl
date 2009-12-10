@@ -157,7 +157,7 @@ process_request(Request, Pending2, State) ->
   case Pid of
     native ->
       logger:debug("Dispatching to native module~n", []),
-      process_native_request(ActionTerm, Request, State);
+      process_native_request(ActionTerm, Request, Pending2, State);
     ValidPid when is_pid(ValidPid) ->
       logger:debug("Found extern pid ~p~n", [ValidPid]),
       process_extern_request(ValidPid, Request, Pending2, State);
@@ -182,12 +182,12 @@ close_if_cast(ActionTerm, Request) ->
       ok
   end.
 
-process_native_request(ActionTerm, Request, State) ->
+process_native_request(ActionTerm, Request, Pending2, State) ->
   Count = State#state.count,
   State2 = State#state{count = Count + 1},
   logger:debug("Count = ~p~n", [Count + 1]),
   spawn(fun() -> native:process(ActionTerm, Request) end),
-  State2.
+  State2#state{pending = Pending2}.
 
 process_extern_request(Pid, Request, Pending2, State) ->
   Count = State#state.count,
