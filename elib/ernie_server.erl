@@ -103,6 +103,9 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %% Internal
 %%====================================================================
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Module mapping
+
 extract_mapping(Config) ->
   Id = proplists:get_value(id, Config),
   Mods = proplists:get_value(modules, Config),
@@ -110,6 +113,9 @@ extract_mapping(Config) ->
 
 init_map(Configs) ->
   lists:foldl(fun(X, Acc) -> Acc ++ extract_mapping(X) end, [], Configs).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Listen and loop
 
 try_listen(Port, 0) ->
   error_logger:error_msg("Could not listen on port ~p~n", [Port]),
@@ -131,6 +137,9 @@ loop(LSock) ->
   logger:debug("Accepted socket: ~p~n", [Sock]),
   ernie_server:process(Sock),
   loop(LSock).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Receive and process
 
 receive_term(Request, State) ->
   Sock = Request#request.sock,
@@ -189,6 +198,9 @@ close_if_cast(ActionTerm, Request) ->
       ok
   end.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Native
+
 process_native_request(ActionTerm, Request, Priority, Q2, State) ->
   Count = State#state.count,
   State2 = State#state{count = Count + 1},
@@ -198,6 +210,9 @@ process_native_request(ActionTerm, Request, Priority, Q2, State) ->
     hq -> State2#state{hq = Q2};
     lq -> State2#state{lq = Q2}
   end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% External
 
 process_extern_request(Pid, Request, Priority, Q2, State) ->
   Count = State#state.count,
