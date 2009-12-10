@@ -125,26 +125,6 @@ loop(LSock) ->
   ernie_server:process(Sock),
   loop(LSock).
 
-process_admin(Sock, reload_handlers, _Args, State) ->
-  asset_pool:reload_assets(),
-  gen_tcp:send(Sock, term_to_binary({reply, <<"Handlers reloaded.">>})),
-  ok = gen_tcp:close(Sock),
-  State;
-process_admin(Sock, stats, _Args, State) ->
-  Count = State#state.count,
-  CountString = list_to_binary([<<"connections.total=">>, integer_to_list(Count), <<"\n">>]),
-  IdleWorkers = asset_pool:idle_worker_count(),
-  IdleWorkersString = list_to_binary([<<"workers.idle=">>, integer_to_list(IdleWorkers), <<"\n">>]),
-  QueueLength = queue:len(State#state.pending),
-  QueueLengthString = list_to_binary([<<"connections.pending=">>, integer_to_list(QueueLength), <<"\n">>]),
-  gen_tcp:send(Sock, term_to_binary({reply, list_to_binary([CountString, IdleWorkersString, QueueLengthString])})),
-  ok = gen_tcp:close(Sock),
-  State;
-process_admin(Sock, _Fun, _Args, State) ->
-  gen_tcp:send(Sock, term_to_binary({reply, <<"Admin function not supported.">>})),
-  ok = gen_tcp:close(Sock),
-  State.
-
 receive_term(Request, State) ->
   Sock = Request#request.sock,
   case gen_tcp:recv(Sock, 0) of
@@ -154,7 +134,7 @@ receive_term(Request, State) ->
       logger:info("Got term: ~p~n", [Term]),
       case Term of
         {call, '__admin__', Fun, Args} ->
-          process_admin(Sock, Fun, Args, State);
+          ernie_admin:process(Sock, Fun, Args, State);
         {info, _Command, _Args} ->
           Request2 = Request#request{info = BinaryTerm},
           receive_term(Request2, State);
