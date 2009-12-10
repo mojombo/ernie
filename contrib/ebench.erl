@@ -43,7 +43,7 @@ hit(Waiter) ->
   % io:format("outgoing!~n", []),
   Host = "localhost",
   {ok, Sock} = gen_tcp:connect(Host, 8000, [binary, {packet, 4}]),
-  Request = term_to_binary({call, nat, add, [1, 2]}),
+  Request = term_to_binary({call, ext, add, [1, 2]}),
   ok = gen_tcp:send(Sock, Request),
   receive
     {tcp, _Port, Reply} ->
