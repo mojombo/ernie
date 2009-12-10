@@ -189,14 +189,6 @@ end
 
 # Root level calls
 
-def mod(name, &block)
-  Ernie.mod(name, block)
-end
-
-def fun(name, &block)
-  Ernie.fun(name, block)
-end
-
 def logfile(name)
   Ernie.logfile(name)
 end
