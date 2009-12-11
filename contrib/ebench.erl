@@ -44,7 +44,14 @@ loop(Waiter, N, Mod, Fun) ->
 hit(Waiter, Mod, Fun) ->
   % io:format("outgoing!~n", []),
   Host = "localhost",
-  {ok, Sock} = gen_tcp:connect(Host, 8000, [binary, {packet, 4}]),
+  case gen_tcp:connect(Host, 8000, [binary, {packet, 4}]) of
+    {ok, Sock} -> process(Waiter, Mod, Fun, Sock);
+    Any ->
+      io:format("Unable to establish connection: ~p~n", [Any]),
+      Waiter ! done
+  end.
+
+process(Waiter, Mod, Fun, Sock) ->
   % Info = term_to_binary({info, priority, [low]}),
   % ok = gen_tcp:send(Sock, Info),
   Request = term_to_binary({call, Mod, Fun, args(Fun)}),
@@ -53,14 +60,13 @@ hit(Waiter, Mod, Fun) ->
     {tcp, _Port, Reply} ->
       % io:format("~p~n", [Reply]),
       Res = res(Fun),
-      {reply, Res} = binary_to_term(Reply),
-      Waiter ! done,
-      ok;
+      {reply, Res} = binary_to_term(Reply);
+    {tcp_closed, Port} ->
+      io:format("Connection closed after sending data: ~p~n", [Port]);
     Any ->
-      io:format("Unexpected message: ~p~n", [Any]),
-      Waiter ! done,
-      ok
+      io:format("Unexpected message: ~p~n", [Any])
   end,
+  Waiter ! done,
   ok = gen_tcp:close(Sock).
 
 args(add) -> [1, 2];
