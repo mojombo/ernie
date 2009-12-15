@@ -3,7 +3,22 @@ Ernie
 
 By Tom Preston-Werner (tom@mojombo.com)
 
-Ernie is a BERT-RPC server implementation that uses an Erlang server to accept incoming connections, and then delegates the request to Ruby handlers.
+Ernie is a BERT-RPC server implementation that uses an Erlang server to accept
+incoming connections, and then delegates the request to custom modules that
+you can write in any language (currently only Ruby and Erlang support is
+included).
+
+Modules that are written in Ruby or any non-Erlang language are known as
+"external" modules and you must specify how many workers of each module should
+be spawned. Requests against these modules is balanced between the workers.
+Modules that are written in Erlang are known as "native" modules and run
+within the Erlang server's runtime. Since these are spawned as lightweight
+processes, there is no balancing necessary and much less communication
+overhead when compared to external modules.
+
+Ernie supports multiple heterogenous modules. For instance, you can have an
+external Ruby module running 10 workers *and* a native Erlang module running
+simultaneously. Ernie keeps track of sending requests to the proper module.
 
 See the full BERT-RPC specification at [bert-rpc.org](http://bert-rpc.org).
 
@@ -12,7 +27,9 @@ Ernie currently supports the following BERT-RPC features:
 * `call` requests
 * `cast` requests
 
-Ernie was developed for GitHub and is currently in production use serving millions of RPC requests every day. The stability and performance have been exemplary.
+Ernie was developed for GitHub and is currently in production use serving
+millions of RPC requests every day. The stability and performance have been
+exemplary.
 
 
 Installation
