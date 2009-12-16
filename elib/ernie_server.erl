@@ -185,22 +185,28 @@ process_info(Request, _Command, _Args) ->
 process_request(Request, Priority, Q2, State) ->
   ActionTerm = binary_to_term(Request#request.action),
   {_Type, Mod, _Fun, _Args} = ActionTerm,
-  Pid = proplists:get_value(Mod, State#state.map),
-  case Pid of
+  Specs = lists:filter(fun({X, _Id}) -> Mod =:= X end, State#state.map),
+  io:format("~p~n", [Specs]),
+  process_module(ActionTerm, Specs, Request, Priority, Q2, State).
+
+process_module(ActionTerm, [], Request, Priority, Q2, State) ->
+  {_Type, Mod, _Fun, _Args} = ActionTerm,
+  logger:debug("No such module ~p~n", [Mod]),
+  Sock = Request#request.sock,
+  Class = <<"ServerError">>,
+  Message = list_to_binary(io_lib:format("No such module '~p'", [Mod])),
+  gen_tcp:send(Sock, term_to_binary({error, [server, 0, Class, Message, []]})),
+  ok = gen_tcp:close(Sock),
+  finish(Priority, Q2, State);
+process_module(ActionTerm, Specs, Request, Priority, Q2, State) ->
+  [{_Mod, Id} | _Rest] = Specs,
+  case Id of
     native ->
       logger:debug("Dispatching to native module~n", []),
       process_native_request(ActionTerm, Request, Priority, Q2, State);
     ValidPid when is_pid(ValidPid) ->
       logger:debug("Found extern pid ~p~n", [ValidPid]),
-      process_extern_request(ValidPid, Request, Priority, Q2, State);
-    undefined ->
-      logger:debug("No such module ~p~n", [Mod]),
-      Sock = Request#request.sock,
-      Class = <<"ServerError">>,
-      Message = list_to_binary(io_lib:format("No such module '~p'", [Mod])),
-      gen_tcp:send(Sock, term_to_binary({error, [server, 0, Class, Message, []]})),
-      ok = gen_tcp:close(Sock),
-      State
+      process_extern_request(ValidPid, Request, Priority, Q2, State)
   end.
 
 close_if_cast(ActionTerm, Request) ->
@@ -214,6 +220,12 @@ close_if_cast(ActionTerm, Request) ->
       ok
   end.
 
+finish(Priority, Q2, State) ->
+  case Priority of
+    hq -> State#state{hq = Q2};
+    lq -> State#state{lq = Q2}
+  end.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Native
 
@@ -222,10 +234,7 @@ process_native_request(ActionTerm, Request, Priority, Q2, State) ->
   State2 = State#state{count = Count + 1},
   logger:debug("Count = ~p~n", [Count + 1]),
   spawn(fun() -> native:process(ActionTerm, Request) end),
-  case Priority of
-    hq -> State2#state{hq = Q2};
-    lq -> State2#state{lq = Q2}
-  end.
+  finish(Priority, Q2, State2).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % External
@@ -238,10 +247,7 @@ process_extern_request(Pid, Request, Priority, Q2, State) ->
     {ok, Asset} ->
       logger:debug("Leased asset for pool ~p~n", [Pid]),
       spawn(fun() -> process_now(Pid, Request, Asset) end),
-      case Priority of
-        hq -> State2#state{hq = Q2};
-        lq -> State2#state{lq = Q2}
-      end;
+      finish(Priority, Q2, State2);
     empty ->
       State
   end.
