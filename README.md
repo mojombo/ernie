@@ -69,7 +69,8 @@ Running
 Configuration File
 ------------------
 
-Ernie configuration files are written as a series of Erlang terms. Each term is a list of 2-tuples that specify options for a module.
+Ernie configuration files are written as a series of Erlang terms. Each term
+is a list of 2-tuples that specify options for a module.
 
 The form for native modules is:
 
@@ -92,6 +93,13 @@ The form for external modules is:
 Where Module is an atom corresponding to the module name, Command is a string
 specifying the command to be executed in order to start a worker, and Count is
 the number of workers to spawn.
+
+If you specify a native module and an external module of the same name (and in
+that order), Ernie will inspect the native module to see if it has the
+requested function exported and use that if it does. If it does not, then it
+will fall back on the external module. This can be used to selectively
+optimize certain functions in a module without any modifications to your
+client code.
 
 
 Example Configuration File

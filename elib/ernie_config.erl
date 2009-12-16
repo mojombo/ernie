@@ -12,6 +12,8 @@ load_single(Config) ->
       verify(native, Config),
       CodePaths = proplists:get_value(codepaths, Config),
       lists:map((fun code:add_patha/1), CodePaths),
+      Mod = proplists:get_value(module, Config),
+      code:load_file(Mod),
       [{id, native} | Config];
     extern ->
       verify(extern, Config),

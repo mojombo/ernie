@@ -186,7 +186,6 @@ process_request(Request, Priority, Q2, State) ->
   ActionTerm = binary_to_term(Request#request.action),
   {_Type, Mod, _Fun, _Args} = ActionTerm,
   Specs = lists:filter(fun({X, _Id}) -> Mod =:= X end, State#state.map),
-  io:format("~p~n", [Specs]),
   process_module(ActionTerm, Specs, Request, Priority, Q2, State).
 
 process_module(ActionTerm, [], Request, Priority, Q2, State) ->
@@ -199,11 +198,18 @@ process_module(ActionTerm, [], Request, Priority, Q2, State) ->
   ok = gen_tcp:close(Sock),
   finish(Priority, Q2, State);
 process_module(ActionTerm, Specs, Request, Priority, Q2, State) ->
-  [{_Mod, Id} | _Rest] = Specs,
+  [{_Mod, Id} | OtherSpecs] = Specs,
   case Id of
     native ->
       logger:debug("Dispatching to native module~n", []),
-      process_native_request(ActionTerm, Request, Priority, Q2, State);
+      {_Type, Mod, Fun, Args} = ActionTerm,
+      case erlang:function_exported(Mod, Fun, length(Args)) of
+        false ->
+          logger:debug("Not found in native module ~p~n", [Mod]),
+          process_module(ActionTerm, OtherSpecs, Request, Priority, Q2, State);
+        true ->
+          process_native_request(ActionTerm, Request, Priority, Q2, State)
+      end;
     ValidPid when is_pid(ValidPid) ->
       logger:debug("Found extern pid ~p~n", [ValidPid]),
       process_extern_request(ValidPid, Request, Priority, Q2, State)
