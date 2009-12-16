@@ -69,46 +69,45 @@ Running
 Configuration File
 ------------------
 
-Ernie configuration files are written as a series of Erlang terms. Each term is a list of 2-tuples that specify options for a set of modules.
+Ernie configuration files are written as a series of Erlang terms. Each term is a list of 2-tuples that specify options for a module.
 
 The form for native modules is:
 
-    [{modules, Modules},
+    [{module, Module},
      {type, native},
      {codepaths, CodePaths}].
 
-Where Modules is a list of atoms corresponding to the module names and
-CodePaths is a list of strings representing the file paths that should be
-added to the runtime's code path. These paths will be prepended to the code
-path and must include the native module's directory and the directories of any
-other dependencies.
+Where Module is an atom corresponding to the module name and CodePaths is a
+list of strings representing the file paths that should be added to the
+runtime's code path. These paths will be prepended to the code path and must
+include the native module's directory and the directories of any dependencies.
 
 The form for external modules is:
 
-    [{modules, Modules},
+    [{module, Module},
      {type, extern},
      {command, Command},
      {count, Count}].
 
-Where Modules is a list of atoms corresponding to the module names, Command is
-a string specifying the command to be executed in order to start a worker, and
-Count is the number of workers to spawn.
+Where Module is an atom corresponding to the module name, Command is a string
+specifying the command to be executed in order to start a worker, and Count is
+the number of workers to spawn.
 
 
 Example Configuration File
 --------------------------
 
 The following example config file informs Ernie of two modules. The first term
-identifies a native module 'nat' that resides in a .beam file under the
+identifies a native module 'nat' that resides in the nat.beam file under the
 '/path/to/app/ebin' directory. The second term specifies an external module
 'ext' that will have 2 workers started with the command 'ruby
 /path/to/app/ernie/ext.rb'.
 
-    [{modules, [nat]},
+    [{module, nat},
      {type, native},
      {codepaths, ["/path/to/app/ebin"]}].
 
-    [{modules, [ext]},
+    [{module, ext},
      {type, extern},
      {command, "ruby /path/to/app/ernie/ext.rb"},
      {count, 2}].
@@ -131,13 +130,13 @@ Using a Ruby module and Ernie.expose:
 
     require 'ernie'
     
-    module Calc
+    module Ext
       def add(a, b)
         a + b
       end
     end
     
-    Ernie.expose(:calc, Calc)
+    Ernie.expose(:ext, Ext)
 
 
 Logging
@@ -165,7 +164,7 @@ you can disable this behavior by setting:
 Example BERT-RPC call for above example
 ---------------------------------------
 
-    -> {call, calc, add, [1, 2]}
+    -> {call, ext, add, [1, 2]}
 
     <- {reply, 3}
 
@@ -178,7 +177,7 @@ You can make BERT-RPC calls from Ruby with the [BERTRPC gem](http://github.com/m
     require 'bertrpc'
 
     svc = BERTRPC::Service.new('localhost', 8000)
-    svc.call.calc.add(1, 2)
+    svc.call.ext.add(1, 2)
     # => 3
 
 

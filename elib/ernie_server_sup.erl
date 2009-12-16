@@ -15,7 +15,7 @@ init([]) ->
     undefined -> ok
   end,
   {ok, Config} = application:get_env(ernie_server_app, config),
-  {ok, Configs} = config:load(Config),
+  {ok, Configs} = ernie_config:load(Config),
   io:format("~p~n", [Configs]),
   {ok, {{one_for_one, 1, 60},
     [{ernie_server, {ernie_server, start_link, [[Port, Configs]]},

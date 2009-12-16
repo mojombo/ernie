@@ -107,13 +107,13 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Module mapping
 
+init_map(Configs) ->
+  lists:map((fun extract_mapping/1), Configs).
+
 extract_mapping(Config) ->
   Id = proplists:get_value(id, Config),
-  Mods = proplists:get_value(modules, Config),
-  lists:map(fun(X) -> {X, Id} end, Mods).
-
-init_map(Configs) ->
-  lists:foldl(fun(X, Acc) -> Acc ++ extract_mapping(X) end, [], Configs).
+  Mod = proplists:get_value(module, Config),
+  {Mod, Id}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Listen and loop

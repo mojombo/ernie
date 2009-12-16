@@ -1,4 +1,4 @@
--module(config).
+-module(ernie_config).
 -export([load/1]).
 
 load(ConfigFile) ->
