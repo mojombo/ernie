@@ -10,7 +10,7 @@ included).
 
 Modules that are written in Ruby or any non-Erlang language are known as
 "external" modules and you must specify how many workers of each module should
-be spawned. Requests against these modules is balanced between the workers.
+be spawned. Requests against these modules are balanced between the workers.
 Modules that are written in Erlang are known as "native" modules and run
 within the Erlang server's runtime. Since these are spawned as lightweight
 processes, there is no balancing necessary and much less communication
@@ -19,6 +19,9 @@ overhead when compared to external modules.
 Ernie supports multiple heterogenous modules. For instance, you can have an
 external Ruby module running 10 workers *and* a native Erlang module running
 simultaneously. Ernie keeps track of sending requests to the proper module.
+Using a technique called "shadowing," you can selectively optimize certain
+external module functions with native code and Ernie will handle selecting the
+correct function.
 
 See the full BERT-RPC specification at [bert-rpc.org](http://bert-rpc.org).
 
@@ -35,9 +38,11 @@ exemplary.
 Installation
 ------------
 
-You must have Erlang installed before installing Ernie.
+Step 1: Install Erlang.
 
-    $ gem install ernie -s http://gemcutter.org
+Step 2: Install Ernie:
+
+    $ gem install ernie
 
 
 Running
@@ -69,8 +74,8 @@ Running
 Configuration File
 ------------------
 
-Ernie configuration files are written as a series of Erlang terms. Each term
-is a list of 2-tuples that specify options for a module.
+Ernie configuration files are written as a series of dotted Erlang terms. Each
+term is a list of 2-tuples that specify options for a module.
 
 ### Native Modules
 
@@ -182,8 +187,8 @@ very large log files).
 Autostart
 ---------
 
-Normally Ernie handlers will become active after the file has been loaded in.
-you can disable this behavior by setting:
+Normally Ruby Ernie handlers will become active after the file has been loaded
+in. you can disable this behavior by setting:
 
     Ernie.auto_start = false
 
