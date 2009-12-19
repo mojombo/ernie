@@ -15,7 +15,7 @@ module Ext
     end
   end
 
-  def shadow
+  def shadow(x)
     "ruby"
   end
 

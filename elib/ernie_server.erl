@@ -208,7 +208,22 @@ process_module(ActionTerm, Specs, Request, Priority, Q2, State) ->
           logger:debug("Not found in native module ~p~n", [Mod]),
           process_module(ActionTerm, OtherSpecs, Request, Priority, Q2, State);
         true ->
-          process_native_request(ActionTerm, Request, Priority, Q2, State)
+          PredFun = list_to_atom(atom_to_list(Fun) ++ "_pred"),
+          logger:debug("Checking ~p:~p(~p) for selection.~n", [Mod, PredFun, Args]),
+          case erlang:function_exported(Mod, PredFun, length(Args)) of
+            false ->
+              logger:debug("No such predicate function ~p:~p(~p).~n", [Mod, PredFun, Args]),
+              process_native_request(ActionTerm, Request, Priority, Q2, State);
+            true ->
+              case apply(Mod, PredFun, Args) of
+                false ->
+                  logger:debug("Predicate ~p:~p(~p) returned false.~n", [Mod, PredFun, Args]),
+                  process_module(ActionTerm, OtherSpecs, Request, Priority, Q2, State);
+                true ->
+                  logger:debug("Predicate ~p:~p(~p) returned true.~n", [Mod, PredFun, Args]),
+                  process_native_request(ActionTerm, Request, Priority, Q2, State)
+              end
+          end
       end;
     ValidPid when is_pid(ValidPid) ->
       logger:debug("Found extern pid ~p~n", [ValidPid]),

@@ -72,6 +72,8 @@ Configuration File
 Ernie configuration files are written as a series of Erlang terms. Each term
 is a list of 2-tuples that specify options for a module.
 
+### Native Modules
+
 The form for native modules is:
 
     [{module, Module},
@@ -82,6 +84,8 @@ Where Module is an atom corresponding to the module name and CodePaths is a
 list of strings representing the file paths that should be added to the
 runtime's code path. These paths will be prepended to the code path and must
 include the native module's directory and the directories of any dependencies.
+
+### External Modules
 
 The form for external modules is:
 
@@ -94,12 +98,27 @@ Where Module is an atom corresponding to the module name, Command is a string
 specifying the command to be executed in order to start a worker, and Count is
 the number of workers to spawn.
 
+### Shadowing
+
 If you specify a native module and an external module of the same name (and in
 that order), Ernie will inspect the native module to see if it has the
 requested function exported and use that if it does. If it does not, then it
 will fall back on the external module. This can be used to selectively
 optimize certain functions in a module without any modifications to your
 client code.
+
+### Predicate Shadowing
+
+In some circumstances it can be nice to conditionally shadow a function in an
+external module based on the nature of the arguments. For example, you might
+want requests for `math:fib(X)` to be routed to the external module when X is
+less than 10, but to be handled by the native module when X is 10 or greater.
+This can be accomplished by implementing a function `math:fib_pred(X)` in the
+native module. Notice the `_pred` appended to the normal function name (pred
+is short for predicate). If a function like this is present, Ernie will call
+it with the requested arguments and if the return value is `true` the native
+module will be used. If the return value is `false` the external module will
+be used.
 
 
 Example Configuration File
