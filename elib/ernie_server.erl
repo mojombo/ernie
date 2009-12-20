@@ -267,7 +267,7 @@ process_now(Pid, Request, Asset) ->
   try unsafe_process_now(Request, Asset) of
     _AnyResponse -> ok
   catch
-    _AnyError -> ok
+    _AnyClass:_AnyError -> ok
   after
     asset_pool:return(Pid, Asset),
     ernie_server:kick(),
