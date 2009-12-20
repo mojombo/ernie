@@ -1,4 +1,4 @@
--module(native).
+-module(ernie_native).
 -export([process/2]).
 
 -record(request, {sock = undefined,     % connection socket

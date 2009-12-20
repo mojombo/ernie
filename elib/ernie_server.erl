@@ -254,7 +254,7 @@ process_native_request(ActionTerm, Request, Priority, Q2, State) ->
   Count = State#state.count,
   State2 = State#state{count = Count + 1},
   logger:debug("Count = ~p~n", [Count + 1]),
-  spawn(fun() -> native:process(ActionTerm, Request) end),
+  spawn(fun() -> ernie_native:process(ActionTerm, Request) end),
   finish(Priority, Q2, State2).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
