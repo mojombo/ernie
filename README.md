@@ -34,11 +34,15 @@ Ernie was developed for GitHub and is currently in production use serving
 millions of RPC requests every day. The stability and performance have been
 exemplary.
 
+Ernie follows [Semantic Versioning](http://semver.org/) for release
+versioning.
 
 Installation
 ------------
 
 Step 1: Install Erlang.
+
+    http://www.erlang.org/download.html
 
 Step 2: Install Ernie:
 
