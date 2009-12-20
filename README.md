@@ -95,7 +95,7 @@ include the native module's directory and the directories of any dependencies.
 The form for external modules is:
 
     [{module, Module},
-     {type, extern},
+     {type, external},
      {command, Command},
      {count, Count}].
 
@@ -140,7 +140,7 @@ identifies a native module 'nat' that resides in the nat.beam file under the
      {codepaths, ["/path/to/app/ebin"]}].
 
     [{module, ext},
-     {type, extern},
+     {type, external},
      {command, "ruby /path/to/app/ernie/ext.rb"},
      {count, 2}].
 

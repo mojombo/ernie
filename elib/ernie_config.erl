@@ -15,8 +15,8 @@ load_single(Config) ->
       Mod = proplists:get_value(module, Config),
       code:load_file(Mod),
       [{id, native} | Config];
-    extern ->
-      verify(extern, Config),
+    external ->
+      verify(external, Config),
       Handler = proplists:get_value(command, Config),
       Number = proplists:get_value(count, Config),
       {ok, SupPid} = asset_pool_sup:start_link(Handler, Number),
@@ -26,5 +26,5 @@ load_single(Config) ->
 
 verify(native, _Config) ->
   ok;
-verify(extern, _Config) ->
+verify(external, _Config) ->
   ok.

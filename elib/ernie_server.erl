@@ -226,8 +226,8 @@ process_module(ActionTerm, Specs, Request, Priority, Q2, State) ->
           end
       end;
     ValidPid when is_pid(ValidPid) ->
-      logger:debug("Found extern pid ~p~n", [ValidPid]),
-      process_extern_request(ValidPid, Request, Priority, Q2, State)
+      logger:debug("Found external pid ~p~n", [ValidPid]),
+      process_external_request(ValidPid, Request, Priority, Q2, State)
   end.
 
 close_if_cast(ActionTerm, Request) ->
@@ -260,7 +260,7 @@ process_native_request(ActionTerm, Request, Priority, Q2, State) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % External
 
-process_extern_request(Pid, Request, Priority, Q2, State) ->
+process_external_request(Pid, Request, Priority, Q2, State) ->
   Count = State#state.count,
   State2 = State#state{count = Count + 1},
   logger:debug("Count = ~p~n", [Count + 1]),
