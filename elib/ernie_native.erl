@@ -1,10 +1,6 @@
 -module(ernie_native).
 -export([process/2]).
-
--record(request, {sock = undefined,     % connection socket
-                  infos = [],           % list of info binaries
-                  action = undefined,   % action binary
-                  priority = high}).    % priority [ high | low ]
+-include_lib("ernie.hrl").
 
 process(ActionTerm, Request) ->
   {_Type, Mod, Fun, Args} = ActionTerm,

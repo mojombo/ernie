@@ -1,11 +1,6 @@
 -module(ernie_admin).
 -export([process/4]).
-
--record(state, {lsock = undefined,      % the listen socket
-                hq = queue:new(),       % high priority queue
-                lq = queue:new(),       % low priority queue
-                count = 0,              % total request count
-                map = undefined}).      % module map. tuples of {Mod, Id}
+-include_lib("ernie.hrl").
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Process entry point

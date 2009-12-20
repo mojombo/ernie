@@ -1,5 +1,6 @@
 -module(ernie_server).
 -behaviour(gen_server).
+-include_lib("ernie.hrl").
 
 %% api
 -export([start_link/1, start/1, process/1, kick/0]).
@@ -7,17 +8,6 @@
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
-
--record(state, {lsock = undefined,      % the listen socket
-                hq = queue:new(),       % high priority queue
-                lq = queue:new(),       % low priority queue
-                count = 0,              % total request count
-                map = undefined}).      % module map. tuples of {Mod, Id}
-
--record(request, {sock = undefined,     % connection socket
-                  infos = [],           % list of info binaries
-                  action = undefined,   % action binary
-                  priority = high}).    % priority [ high | low ]
 
 %%====================================================================
 %% API
