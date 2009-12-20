@@ -26,10 +26,10 @@ return(Pid, Asset) ->
   gen_server:call(Pid, {return, Asset}).
 
 reload_assets(Pid) ->
-  gen_server:call(Pid, {reload_assets}).
+  gen_server:call(Pid, reload_assets).
 
 idle_worker_count(Pid) ->
-  gen_server:call(Pid, {idle_worker_count}).
+  gen_server:call(Pid, idle_worker_count).
 
 %%====================================================================
 %% gen_server callbacks
@@ -90,10 +90,10 @@ handle_call({return, Asset}, _From, State) ->
   end,
   Assets2 = queue:in(NewAsset, State#state.assets),
   {reply, ok, State#state{assets = Assets2}};
-handle_call({reload_assets}, _From, State) ->
+handle_call(reload_assets, _From, State) ->
   Token = make_ref(),
   {reply, ok, State#state{token = Token}};
-handle_call({idle_worker_count}, _From, State) ->
+handle_call(idle_worker_count, _From, State) ->
   WorkerCount = queue:len(State#state.assets),
   {reply, WorkerCount, State};
 handle_call(_Request, _From, State) ->
