@@ -173,7 +173,7 @@ process_info(Request, _Command, _Args) ->
   Request.
 
 process_request(Request, Priority, Q2, State) ->
-  ActionTerm = binary_to_term(Request#request.action),
+  ActionTerm = bert:decode(Request#request.action),
   {_Type, Mod, _Fun, _Args} = ActionTerm,
   Specs = lists:filter(fun({X, _Id}) -> Mod =:= X end, State#state.map),
   process_module(ActionTerm, Specs, Request, Priority, Q2, State).

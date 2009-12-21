@@ -9,7 +9,7 @@ process(ActionTerm, Request) ->
   try apply(Mod, Fun, Args) of
     Result ->
       logger:debug("Result was ~p~n", [Result]),
-      Data = term_to_binary({reply, Result}),
+      Data = bert:encode({reply, Result}),
       gen_tcp:send(Sock, Data)
   catch
     error:Error ->
