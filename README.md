@@ -61,7 +61,7 @@ Running
 
     Commands:
       <none>                Start an Ernie server.
-      reload-handlers       Gracefully reload all of the the ruby handlers
+      reload-handlers       Gracefully reload all of the the external handlers
                             and use the new code for all subsequent requests.
       stats                 Print a list of connection and handler statistics.
 
