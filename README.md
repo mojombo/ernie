@@ -215,6 +215,26 @@ in. you can disable this behavior by setting:
     Ernie.auto_start = false
 
 
+Selecting Queue Priority
+------------------------
+
+Ernie maintains High and Low priority queues for incoming connections. If
+there are any connections in the High priority queue, they will always be
+processed first. If the High priority queue is empty, connections will be
+processed from the Low priority queue. By default, connections go into the
+High priority queue. To select a queue, an info BERP of the following form
+must be sent preceding the call.
+
+    -- {info, priority, Priority}
+
+Where `Priority` is either the `high` or `low` atom. An example sequence where
+the low priority queue is being selected would look like the following.
+
+    -> {info, priority, low}
+    -> {call, nat, add, [1, 2]}
+    <- {reply, 3}
+
+
 Using the BERTRPC gem to make calls to Ernie
 --------------------------------------------
 
