@@ -163,6 +163,11 @@ will become available to BERT-RPC clients.
     add(A, B) ->
       A + B.
 
+### BERT-RPC Sequence Example
+
+    -> {call, nat, add, [1, 2]}
+    <- {reply, 3}
+
 
 External (Ruby) Handler
 -----------------------
@@ -186,6 +191,11 @@ Using a Ruby module and Ernie.expose:
     
     Ernie.expose(:ext, Ext)
 
+### BERT-RPC Sequence Example
+
+    -> {call, nat, add, [1, 2]}
+    <- {reply, 3}
+
 ### Logging
 
 You can have logging sent to a file by adding these lines to your handler:
@@ -203,14 +213,6 @@ Normally Ruby Ernie handlers will become active after the file has been loaded
 in. you can disable this behavior by setting:
 
     Ernie.auto_start = false
-
-
-Example BERT-RPC call for above example
----------------------------------------
-
-    -> {call, ext, add, [1, 2]}
-
-    <- {reply, 3}
 
 
 Using the BERTRPC gem to make calls to Ernie
