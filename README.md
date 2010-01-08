@@ -149,8 +149,13 @@ identifies a native module 'nat' that resides in the nat.beam file under the
      {count, 2}].
 
 
-Example Native (Erlang) Handler
--------------------------------
+Native (Erlang) Handler
+-----------------------
+
+Native handlers are written as normal Erlang modules. The exported functions
+will become available to BERT-RPC clients.
+
+### Example
 
     -module(nat).
     -export([add/2]).
@@ -159,8 +164,15 @@ Example Native (Erlang) Handler
       A + B.
 
 
-Example External (Ruby) Handler
--------------------------------
+External (Ruby) Handler
+-----------------------
+
+Included in this gem is a library called `ernie` that makes it easy to write
+Ernie handlers in Ruby. All you have to do is write a standard Ruby module and
+expose it to Ernie and the functions of that module will become available to
+BERT-RPC clients.
+
+### Example
 
 Using a Ruby module and Ernie.expose:
 
@@ -174,9 +186,7 @@ Using a Ruby module and Ernie.expose:
     
     Ernie.expose(:ext, Ext)
 
-
-Logging
--------
+### Logging
 
 You can have logging sent to a file by adding these lines to your handler:
 
@@ -187,9 +197,7 @@ This will log startup info, requests, and error messages to the log. Choosing
 Logger::DEBUG will include the response (be careful, doing this can generate
 very large log files).
 
-
-Autostart
----------
+### Autostart
 
 Normally Ruby Ernie handlers will become active after the file has been loaded
 in. you can disable this behavior by setting:
