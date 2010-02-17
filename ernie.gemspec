@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ernie}
-  s.version = "1.3.0"
+  s.version = "2.0.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tom Preston-Werner"]
-  s.date = %q{2009-11-30}
+  s.date = %q{2010-02-16}
   s.default_executable = %q{ernie}
   s.email = %q{tom@mojombo.com}
   s.executables = ["ernie"]
@@ -27,9 +27,15 @@ Gem::Specification.new do |s|
      "Rakefile",
      "VERSION.yml",
      "bin/ernie",
+     "contrib/ebench.erl",
      "ebin/ernie_server_app.app",
      "elib/asset_pool.erl",
      "elib/asset_pool_sup.erl",
+     "elib/bert.erl",
+     "elib/ernie.hrl",
+     "elib/ernie_admin.erl",
+     "elib/ernie_config.erl",
+     "elib/ernie_native.erl",
      "elib/ernie_server.erl",
      "elib/ernie_server_app.erl",
      "elib/ernie_server_sup.erl",
@@ -37,16 +43,19 @@ Gem::Specification.new do |s|
      "elib/logger_sup.erl",
      "elib/port_wrapper.erl",
      "ernie.gemspec",
-     "examples/dsl.rb",
-     "examples/expose.rb",
+     "examples/example.cfg",
+     "examples/ext.erl",
+     "examples/ext.rb",
+     "examples/nat.erl",
      "ext/Makefile",
      "ext/extconf.rb",
      "lib/ernie.rb",
      "test/ernie_server_test.rb",
      "test/ernie_test.rb",
-     "test/handler.rb",
      "test/helper.rb",
-     "test/load.rb"
+     "test/load.rb",
+     "test/sample/ext.rb",
+     "test/sample/sample.cfg"
   ]
   s.homepage = %q{http://github.com/mojombo/ernie}
   s.rdoc_options = ["--charset=UTF-8"]
@@ -56,11 +65,10 @@ Gem::Specification.new do |s|
   s.test_files = [
     "test/ernie_server_test.rb",
      "test/ernie_test.rb",
-     "test/handler.rb",
      "test/helper.rb",
      "test/load.rb",
-     "examples/dsl.rb",
-     "examples/expose.rb"
+     "test/sample/ext.rb",
+     "examples/ext.rb"
   ]
 
   if s.respond_to? :specification_version then
