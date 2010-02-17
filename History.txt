@@ -1,3 +1,11 @@
+= 2.0.0 / 2010-02-16
+  * Major Changes
+    * Use configuration file for defining handlers
+    * Add Native Erlang modules
+    * Abstract handler logic to support handlers in any language
+    * Add High/Low connection queues
+    * Remove Ruby DSL (must use Ernie.expose now)
+
 = 1.3.0 / 2009-11-30
   * API Additions
     * Add loglevel for setting log level
