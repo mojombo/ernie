@@ -1,3 +1,7 @@
+= 2.1.0 / 2010-02-20
+  * Major Additions
+    * Add access logging
+
 = 2.0.0 / 2010-02-16
   * Major Changes
     * Use configuration file for defining handlers
