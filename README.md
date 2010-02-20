@@ -56,6 +56,7 @@ Running
         -c, --config CONFIG              Config file.
         -p, --port PORT                  Port.
         -l, --log-level                  Log level (0-4).
+        -a, --access-log LOGFILE         Access log file
         -d, --detached                   Run as a daemon.
         -P, --pidfile PIDFILE            Location to write pid file.
 
@@ -147,6 +148,29 @@ identifies a native module 'nat' that resides in the nat.beam file under the
      {type, external},
      {command, "ruby /path/to/app/ernie/ext.rb"},
      {count, 2}].
+
+
+Access Log
+----------
+
+If you have requested that an access log be written (using the -a or
+--access-log option) then all requests will be logged to that file. Each
+request is printed on a single line. The elements of the log line are as
+follows (with comments on the right side):
+
+    [2010-02-20 11:42:25.259750]         time the connection was accepted
+    0.000053                             seconds until processing started
+    0.000237                             seconds until processing completed
+    -                                    delimiter
+    0                                    size of high queue at connect time
+    0                                    size of low queue at connect time
+    native                               type of handler [ native | external ]
+    high                                 priority [ high | low ]
+    -                                    delimiter
+    {call,nat,add,[1,2]}                 first 200 bytes of the request
+
+To facilitate log rotation, the access log is automatically reopened every 10
+seconds.
 
 
 Native (Erlang) Handler
