@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 %% api
--export([start_link/1, start/1, log/1]).
+-export([start_link/1, start/1, log/1, reopen/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -10,7 +10,7 @@
 
 -include_lib("ernie.hrl").
 
--record(lstate, {access_filename = undefined,
+-record(lstate, {access_file_name = undefined,
                  access_file = undefined}).
 
 %%====================================================================
@@ -25,6 +25,9 @@ start(Args) ->
 
 log(Request) ->
   gen_server:cast({global, ?MODULE}, {log, Request}).
+
+reopen() ->
+  gen_server:cast({global, ?MODULE}, reopen).
 
 %%====================================================================
 %% gen_server callbacks
@@ -43,7 +46,7 @@ init([undefined]) ->
 init([AccessFileName]) ->
   error_logger:info_msg("~p starting~n", [?MODULE]),
   {ok, AccessFile} = file:open(AccessFileName, [append]),
-  {ok, #lstate{access_filename = AccessFileName,
+  {ok, #lstate{access_file_name = AccessFileName,
                access_file = AccessFile}}.
 
 %%--------------------------------------------------------------------
@@ -65,12 +68,22 @@ handle_call(_Request, _From, State) ->
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
 handle_cast({log, Request}, State) ->
-  case State#lstate.access_filename of
+  case State#lstate.access_file_name of
     undefined -> ok;
     _AccessFilename -> log(Request, State)
   end,
   {noreply, State};
-handle_cast(_Msg, State) -> {noreply, State}.
+handle_cast(reopen, State) ->
+  case State#lstate.access_file_name of
+    undefined ->
+      {noreply, State};
+    AccessFileName ->
+      ok = file:close(State#lstate.access_file),
+      {ok, AccessFile} = file:open(AccessFileName, [append]),
+      {noreply, State#lstate{access_file = AccessFile}}
+  end;
+handle_cast(_Msg, State) ->
+  {noreply, State}.
 
 handle_info(Msg, State) ->
   error_logger:error_msg("Unexpected message: ~p~n", [Msg]),
@@ -99,8 +112,7 @@ log(Request, State) ->
   end,
   Args = [TAccept, D1, D2, HQ, LQ, Type, Prio, Trunc],
   Line = io_lib:fwrite("[~s] ~f ~f - ~B ~B ~p ~p ~s~n", Args),
-  file:write(State#lstate.access_file, Line),
-  io:format("~s", [Line]).
+  file:write(State#lstate.access_file, Line).
 
 time_tuple_to_iso_8601_date(TimeTuple) ->
   {{YY, MM, DD}, {H, M, S}} = calendar:now_to_local_time(TimeTuple),
