@@ -5,6 +5,14 @@
                 map = undefined}).      % module map. tuples of {Mod, Id}
 
 -record(request, {sock = undefined,     % connection socket
+                  log = undefined,      % log information
                   infos = [],           % list of info binaries
                   action = undefined,   % action binary
                   priority = high}).    % priority [ high | low ]
+
+-record(log, {taccept = undefined,      % time that connection was accepted
+              tprocess = undefined,     % time that processing started
+              tdone = undefined,        % time that processing and response is done
+              hq = 0,                   % size of high queue at acceptance
+              lq = 0,                   % size of low queue at acceptance
+              type = undefined}).       % type [ native | ext ]

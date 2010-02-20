@@ -64,7 +64,10 @@ handle_call(_Request, _From, State) ->
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
 handle_cast({process, Sock}, State) ->
-  Request = #request{sock = Sock},
+  Log = #log{hq = queue:len(State#state.hq),
+             lq = queue:len(State#state.lq),
+             taccept = erlang:now()},
+  Request = #request{sock = Sock, log = Log},
   State2 = receive_term(Request, State),
   {noreply, State2};
 handle_cast(kick, State) ->
@@ -244,7 +247,10 @@ process_native_request(ActionTerm, Request, Priority, Q2, State) ->
   Count = State#state.count,
   State2 = State#state{count = Count + 1},
   logger:debug("Count = ~p~n", [Count + 1]),
-  spawn(fun() -> ernie_native:process(ActionTerm, Request) end),
+  Log = Request#request.log,
+  Log2 = Log#log{type = native, tprocess = erlang:now()},
+  Request2 = Request#request{log = Log2},
+  spawn(fun() -> ernie_native:process(ActionTerm, Request2) end),
   finish(Priority, Q2, State2).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -257,7 +263,10 @@ process_external_request(Pid, Request, Priority, Q2, State) ->
   case asset_pool:lease(Pid) of
     {ok, Asset} ->
       logger:debug("Leased asset for pool ~p~n", [Pid]),
-      spawn(fun() -> process_now(Pid, Request, Asset) end),
+      Log = Request#request.log,
+      Log2 = Log#log{type = external, tprocess = erlang:now()},
+      Request2 = Request#request{log = Log2},
+      spawn(fun() -> process_now(Pid, Request2, Asset) end),
       finish(Priority, Q2, State2);
     empty ->
       State
@@ -271,7 +280,11 @@ process_now(Pid, Request, Asset) ->
   after
     asset_pool:return(Pid, Asset),
     ernie_server:kick(),
-    gen_tcp:close(Request#request.sock)
+    gen_tcp:close(Request#request.sock),
+    Log = Request#request.log,
+    Log2 = Log#log{tdone = erlang:now()},
+    Request2 = Request#request{log = Log2},
+    ernie_access_logger:log(Request2)
   end.
 
 unsafe_process_now(Request, Asset) ->

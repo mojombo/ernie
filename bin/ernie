@@ -54,6 +54,10 @@ OptionParser.new do |opts|
     options[:log_level] = x
   end
 
+  opts.on("-a LOGFILE", "--access-log LOGFILE", "Access log file") do |x|
+    options[:access_log] = x
+  end
+
   opts.on("-d", "--detached", "Run as a daemon") do
     options[:detached] = true
   end
@@ -87,6 +91,7 @@ else
   log_level = options[:log_level] || 2
   pidfile = options[:pidfile] ? "-ernie_server_app pidfile \"'#{options[:pidfile]}'\"" : ''
   detached = options[:detached] ? '-detached' : ''
+  access_log = options[:access_log] ? "-ernie_server_app access_log \"'#{options[:access_log]}'\"" : ''
 
   cmd = %Q{erl -boot start_sasl \
                #{detached} \
@@ -95,6 +100,7 @@ else
                -smp enable \
                #{code_paths}
                #{pidfile} \
+               #{access_log} \
                -ernie_server_app port #{port} \
                -ernie_server_app config '"#{config}"' \
                -ernie_server_app log_level #{log_level} \
