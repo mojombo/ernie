@@ -91,7 +91,7 @@ else
   log_level = options[:log_level] || 2
   pidfile = options[:pidfile] ? "-ernie_server_app pidfile \"'#{options[:pidfile]}'\"" : ''
   detached = options[:detached] ? '-detached' : ''
-  access_log = options[:access_log] ? "-ernie_server_app access_log \"'#{options[:access_log]}'\"" : ''
+  access_log = options[:access_log] ? "-ernie_server_app access_log '\"#{options[:access_log]}\"'" : ''
 
   cmd = %Q{erl -boot start_sasl \
                #{detached} \

@@ -10,7 +10,8 @@
 
 -include_lib("ernie.hrl").
 
--record(lstate, {access_file = undefined}).
+-record(lstate, {access_filename = undefined,
+                 access_file = undefined}).
 
 %%====================================================================
 %% API
@@ -36,9 +37,14 @@ log(Request) ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init([AccessFile]) ->
+init([undefined]) ->
   error_logger:info_msg("~p starting~n", [?MODULE]),
-  {ok, #lstate{access_file = AccessFile}}.
+  {ok, #lstate{}};
+init([AccessFileName]) ->
+  error_logger:info_msg("~p starting~n", [?MODULE]),
+  {ok, AccessFile} = file:open(AccessFileName, [append]),
+  {ok, #lstate{access_filename = AccessFileName,
+               access_file = AccessFile}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -59,6 +65,25 @@ handle_call(_Request, _From, State) ->
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
 handle_cast({log, Request}, State) ->
+  case State#lstate.access_filename of
+    undefined -> ok;
+    _AccessFilename -> log(Request, State)
+  end,
+  {noreply, State};
+handle_cast(_Msg, State) -> {noreply, State}.
+
+handle_info(Msg, State) ->
+  error_logger:error_msg("Unexpected message: ~p~n", [Msg]),
+  {noreply, State}.
+
+terminate(_Reason, _State) -> ok.
+code_change(_OldVersion, State, _Extra) -> {ok, State}.
+
+%%====================================================================
+%% Internal
+%%====================================================================
+
+log(Request, State) ->
   Log = Request#request.log,
   TAccept = time_tuple_to_iso_8601_date(Log#log.taccept),
   D1 = time_difference_in_seconds(Log#log.taccept, Log#log.tprocess),
@@ -73,21 +98,9 @@ handle_cast({log, Request}, State) ->
     false -> Trunc = Action
   end,
   Args = [TAccept, D1, D2, HQ, LQ, Type, Prio, Trunc],
-  Line = io_lib:fwrite("[~s] ~f ~f - ~B ~B ~p ~p ~s", Args),
-  io:format("~s~n", [Line]),
-  {noreply, State};
-handle_cast(_Msg, State) -> {noreply, State}.
-
-handle_info(Msg, State) ->
-  error_logger:error_msg("Unexpected message: ~p~n", [Msg]),
-  {noreply, State}.
-
-terminate(_Reason, _State) -> ok.
-code_change(_OldVersion, State, _Extra) -> {ok, State}.
-
-%%====================================================================
-%% Internal
-%%====================================================================
+  Line = io_lib:fwrite("[~s] ~f ~f - ~B ~B ~p ~p ~s~n", Args),
+  file:write(State#lstate.access_file, Line),
+  io:format("~s", [Line]).
 
 time_tuple_to_iso_8601_date(TimeTuple) ->
   {{YY, MM, DD}, {H, M, S}} = calendar:now_to_local_time(TimeTuple),
