@@ -159,8 +159,8 @@ request is printed on a single line. The elements of the log line are as
 follows (with comments on the right side):
 
     [2010-02-20 11:42:25.259750]         time the connection was accepted
-    0.000053                             seconds until processing started
-    0.000237                             seconds until processing completed
+    0.000053                             seconds from connection to processing start
+    0.000237                             seconds from processing start to finish
     -                                    delimiter
     0                                    size of high queue at connect time
     0                                    size of low queue at connect time
