@@ -61,8 +61,8 @@ handle_call(_Request, _From, State) ->
 handle_cast({log, Request}, State) ->
   Log = Request#request.log,
   TAccept = time_tuple_to_iso_8601_date(Log#log.taccept),
-  TProcess = time_tuple_to_iso_8601_date(Log#log.tprocess),
-  TDone = time_tuple_to_iso_8601_date(Log#log.tdone),
+  D1 = time_difference_in_seconds(Log#log.taccept, Log#log.tprocess),
+  D2 = time_difference_in_seconds(Log#log.tprocess, Log#log.tdone),
   Type = Log#log.type,
   HQ = Log#log.hq,
   LQ = Log#log.lq,
@@ -72,8 +72,8 @@ handle_cast({log, Request}, State) ->
     true -> Trunc = [string:sub_string(Action, 200), "..."];
     false -> Trunc = Action
   end,
-  Args = [TAccept, TProcess, TDone, HQ, LQ, Type, Prio, Trunc],
-  Line = io_lib:fwrite("[~s] [~s] [~s] ~B ~B ~p ~p ~s", Args),
+  Args = [TAccept, D1, D2, HQ, LQ, Type, Prio, Trunc],
+  Line = io_lib:fwrite("[~s] ~f ~f - ~B ~B ~p ~p ~s", Args),
   io:format("~s~n", [Line]),
   {noreply, State};
 handle_cast(_Msg, State) -> {noreply, State}.
@@ -94,3 +94,12 @@ time_tuple_to_iso_8601_date(TimeTuple) ->
   {_MegaSecs, _Secs, MicroSecs} = TimeTuple,
   Args = [YY, MM, DD, H, M, S, MicroSecs],
   io_lib:fwrite("~4B-~2.10.0B-~2.10.0B ~2.10.0B:~2.10.0B:~2.10.0B.~-6.10.0B", Args).
+
+time_difference_in_seconds(T1, T2) ->
+  {_, _, MS1} = T1,
+  {_, _, MS2} = T2,
+  S1 = calendar:datetime_to_gregorian_seconds(calendar:now_to_local_time(T1)),
+  S2 = calendar:datetime_to_gregorian_seconds(calendar:now_to_local_time(T2)),
+  F1 = S1 + (MS1 / 1000000),
+  F2 = S2 + (MS2 / 1000000),
+  F2 - F1.
