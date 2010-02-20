@@ -45,10 +45,15 @@ init([undefined]) ->
   {ok, #lstate{}};
 init([AccessFileName]) ->
   error_logger:info_msg("~p starting~n", [?MODULE]),
-  {ok, AccessFile} = file:open(AccessFileName, [append]),
-  {ok, _T} = timer:apply_interval(10000, ernie_access_logger, reopen, []),
-  {ok, #lstate{access_file_name = AccessFileName,
-               access_file = AccessFile}}.
+  case file:open(AccessFileName, [append]) of
+    {ok, AccessFile} ->
+      {ok, _T} = timer:apply_interval(10000, ernie_access_logger, reopen, []),
+      {ok, #lstate{access_file_name = AccessFileName,
+                   access_file = AccessFile}};
+    {error, Error} ->
+      error_logger:error_msg("Error opening access log ~p: ~p.~n", [AccessFileName, Error]),
+      {ok, #lstate{}}
+  end.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
