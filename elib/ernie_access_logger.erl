@@ -111,10 +111,14 @@ log(Request, State) ->
   HQ = Log#log.hq,
   LQ = Log#log.lq,
   Prio = Request#request.priority,
-  Action = lists:flatten(io_lib:fwrite("~200.0.0p", [binary_to_term(Request#request.action)])),
-  case string:len(Action) > 200 of
-    true -> Trunc = [string:sub_string(Action, 200), "..."];
-    false -> Trunc = Action
+  TermAction = binary_to_term(Request#request.action),
+  RawAction = lists:flatten(io_lib:fwrite("~1000000000.0.0p", [TermAction])),
+  case string:len(RawAction) > 150 of
+    true ->
+      Action = re:replace(RawAction, "\n", "", [global, {return, list}]),
+      Trunc = [string:sub_string(Action, 1, 150), "..."];
+    false ->
+      Trunc = RawAction
   end,
   Args = [TAccept, D1, D2, HQ, LQ, Type, Prio, Trunc],
   Line = io_lib:fwrite("[~s] ~f ~f - ~B ~B ~p ~p - ~s~n", Args),
