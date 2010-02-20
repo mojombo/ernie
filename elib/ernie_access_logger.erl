@@ -46,6 +46,7 @@ init([undefined]) ->
 init([AccessFileName]) ->
   error_logger:info_msg("~p starting~n", [?MODULE]),
   {ok, AccessFile} = file:open(AccessFileName, [append]),
+  {ok, _T} = timer:apply_interval(10000, ernie_access_logger, reopen, []),
   {ok, #lstate{access_file_name = AccessFileName,
                access_file = AccessFile}}.
 
