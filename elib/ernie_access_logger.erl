@@ -121,7 +121,7 @@ log(Request, State) ->
       Trunc = RawAction
   end,
   Args = [TAccept, D1, D2, HQ, LQ, Type, Prio, Trunc],
-  Line = io_lib:fwrite("[~s] ~f ~f - ~B ~B ~p ~p - ~s~n", Args),
+  Line = io_lib:fwrite("[~s] ~f ~f - ~B ~B ~3s ~p - ~s~n", Args),
   file:write(State#lstate.access_file, Line).
 
 time_tuple_to_iso_8601_date(TimeTuple) ->
