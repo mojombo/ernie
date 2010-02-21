@@ -84,9 +84,16 @@ handle_cast(reopen, State) ->
     undefined ->
       {noreply, State};
     AccessFileName ->
-      ok = file:close(State#lstate.access_file),
-      {ok, AccessFile} = file:open(AccessFileName, [append]),
-      {noreply, State#lstate{access_file = AccessFile}}
+      case file:read_file_info(AccessFileName) of
+        {ok, _FileInfo} ->
+          {noreply, State};
+        {error, enoent} ->
+          ok = file:close(State#lstate.access_file),
+          {ok, AccessFile} = file:open(AccessFileName, [append]),
+          {noreply, State#lstate{access_file = AccessFile}};
+        _OtherError ->
+          {noreply, #lstate{}}
+      end
   end;
 handle_cast(_Msg, State) ->
   {noreply, State}.

@@ -169,8 +169,8 @@ follows (with comments on the right side):
     -                                    delimiter
     {call,nat,add,[1,2]}                 first 150 bytes of the request
 
-To facilitate log rotation, the access log is automatically reopened every 10
-seconds.
+To facilitate log rotation, Ernie will create a new access log file if the
+current log file is moved or deleted.
 
 
 Native (Erlang) Handler
