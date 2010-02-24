@@ -23,4 +23,4 @@ process(ActionTerm, Request) ->
   Log = Request#request.log,
   Log2 = Log#log{tdone = erlang:now()},
   Request2 = Request#request{log = Log2},
-  ernie_access_logger:log(Request2).
+  ernie_access_logger:acc(Request2).

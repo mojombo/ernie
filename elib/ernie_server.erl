@@ -274,17 +274,23 @@ process_external_request(Pid, Request, Priority, Q2, State) ->
 
 process_now(Pid, Request, Asset) ->
   try unsafe_process_now(Request, Asset) of
-    _AnyResponse -> ok
+    _AnyResponse ->
+      Log = Request#request.log,
+      Log2 = Log#log{tdone = erlang:now()},
+      Request2 = Request#request{log = Log2},
+      ernie_access_logger:acc(Request2)
   catch
-    _AnyClass:_AnyError -> ok
+    AnyClass:AnyError ->
+      Log = Request#request.log,
+      Log2 = Log#log{tdone = erlang:now()},
+      Request2 = Request#request{log = Log2},
+      ernie_access_logger:err(Request2, "External process error ~w: ~w", [AnyClass, AnyError])
   after
     asset_pool:return(Pid, Asset),
     ernie_server:kick(),
+    logger:debug("Returned asset ~p~n", [Asset]),
     gen_tcp:close(Request#request.sock),
-    Log = Request#request.log,
-    Log2 = Log#log{tdone = erlang:now()},
-    Request2 = Request#request{log = Log2},
-    ernie_access_logger:log(Request2)
+    logger:debug("Closed socket ~p~n", [Request#request.sock])
   end.
 
 unsafe_process_now(Request, Asset) ->
@@ -297,8 +303,7 @@ unsafe_process_now(Request, Asset) ->
       {asset, Port, Token} = Asset,
       logger:debug("Asset: ~p ~p~n", [Port, Token]),
       {ok, Data} = port_wrapper:rpc(Port, BinaryTerm),
-      gen_tcp:send(Sock, Data),
-      ok = gen_tcp:close(Sock);
+      ok = gen_tcp:send(Sock, Data);
     {cast, Mod, Fun, Args} ->
       logger:debug("Casting ~p:~p(~p)~n", [Mod, Fun, Args]),
       {asset, Port, Token} = Asset,

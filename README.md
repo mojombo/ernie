@@ -158,7 +158,8 @@ If you have requested that an access log be written (using the -a or
 request is printed on a single line. The elements of the log line are as
 follows (with comments on the right side):
 
-    [2010-02-20 11:42:25.259750]         time the connection was accepted
+    ACC                                  type of message [ ACC | ERR ]
+    [2010-02-20T11:42:25.259750]         time the connection was accepted
     0.000053                             seconds from connection to processing start
     0.000237                             seconds from processing start to finish
     -                                    delimiter
@@ -167,7 +168,8 @@ follows (with comments on the right side):
     nat                                  type of handler [ nat | ext ]
     high                                 priority [ high | low ]
     -                                    delimiter
-    {call,nat,add,[1,2]}                 first 150 bytes of the request
+    {call,nat,add,[1,2]}                 message
+
 
 To facilitate log rotation, Ernie will create a new access log file if the
 current log file is moved or deleted.

@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 %% api
--export([start_link/1, start/1, log/1, reopen/0]).
+-export([start_link/1, start/1, acc/1, err/3, reopen/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -23,8 +23,11 @@ start_link(Args) ->
 start(Args) ->
   gen_server:start({global, ?MODULE}, ?MODULE, Args, []).
 
-log(Request) ->
-  gen_server:cast({global, ?MODULE}, {log, Request}).
+acc(Request) ->
+  gen_server:cast({global, ?MODULE}, {acc, Request}).
+
+err(Request, Msg, Args) ->
+  gen_server:cast({global, ?MODULE}, {err, Request, Msg, Args}).
 
 reopen() ->
   gen_server:cast({global, ?MODULE}, reopen).
@@ -73,10 +76,16 @@ handle_call(_Request, _From, State) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
-handle_cast({log, Request}, State) ->
+handle_cast({acc, Request}, State) ->
   case State#lstate.access_file_name of
     undefined -> ok;
-    _AccessFilename -> log(Request, State)
+    _AccessFilename -> acc(Request, State)
+  end,
+  {noreply, State};
+handle_cast({err, Request, Msg, Args}, State) ->
+  case State#lstate.access_file_name of
+    undefined -> ok;
+    _AccessFilename -> err(Request, Msg, Args, State)
   end,
   {noreply, State};
 handle_cast(reopen, State) ->
@@ -109,7 +118,20 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %% Internal
 %%====================================================================
 
-log(Request, State) ->
+acc(Request, State) ->
+  StatString = stat_string(Request),
+  ActionString = action_string(Request),
+  Line = io_lib:fwrite("ACC ~s - ~s~n", [StatString, ActionString]),
+  file:write(State#lstate.access_file, Line).
+
+err(Request, Msg, Args, State) ->
+  StatString = stat_string(Request),
+  ActionString = action_string(Request),
+  ErrString = io_lib:fwrite(Msg, Args),
+  Line = io_lib:fwrite("ERR ~s - ~s : ~s~n", [StatString, ErrString, ActionString]),
+  file:write(State#lstate.access_file, Line).
+
+stat_string(Request) ->
   Log = Request#request.log,
   TAccept = time_tuple_to_iso_8601_date(Log#log.taccept),
   D1 = time_difference_in_seconds(Log#log.taccept, Log#log.tprocess),
@@ -118,18 +140,19 @@ log(Request, State) ->
   HQ = Log#log.hq,
   LQ = Log#log.lq,
   Prio = Request#request.priority,
+  Args = [TAccept, D1, D2, HQ, LQ, Type, Prio],
+  io_lib:fwrite("[~s] ~f ~f - ~B ~B ~3s ~p", Args).
+
+action_string(Request) ->
   TermAction = binary_to_term(Request#request.action),
   RawAction = lists:flatten(io_lib:fwrite("~1000000000.0.0p", [TermAction])),
   case string:len(RawAction) > 150 of
     true ->
       Action = re:replace(RawAction, "\n", "", [global, {return, list}]),
-      Trunc = [string:sub_string(Action, 1, 150), "..."];
+      [string:sub_string(Action, 1, 150), "..."];
     false ->
-      Trunc = RawAction
-  end,
-  Args = [TAccept, D1, D2, HQ, LQ, Type, Prio, Trunc],
-  Line = io_lib:fwrite("[~s] ~f ~f - ~B ~B ~3s ~p - ~s~n", Args),
-  file:write(State#lstate.access_file, Line).
+      RawAction
+  end.
 
 time_tuple_to_iso_8601_date(TimeTuple) ->
   {{YY, MM, DD}, {H, M, S}} = calendar:now_to_local_time(TimeTuple),

@@ -10,9 +10,9 @@
                   action = undefined,   % action binary
                   priority = high}).    % priority [ high | low ]
 
--record(log, {taccept = undefined,      % time that connection was accepted
-              tprocess = undefined,     % time that processing started
-              tdone = undefined,        % time that processing and response is done
+-record(log, {taccept = erlang:now(),   % time that connection was accepted
+              tprocess = erlang:now(),  % time that processing started
+              tdone = erlang:now(),     % time that processing and response is done
               hq = 0,                   % size of high queue at acceptance
               lq = 0,                   % size of low queue at acceptance
-              type = undefined}).       % type [ native | ext ]
+              type = unk}).             % type [ unk | nat | ext ]
