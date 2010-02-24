@@ -40,13 +40,13 @@ versioning.
 Installation
 ------------
 
-Step 1: Install Erlang.
+Step 1: Install Erlang (R13B or higher).
 
     http://www.erlang.org/download.html
 
 Step 2: Install Ernie:
 
-    $ gem install ernie
+    $ [sudo] gem install ernie
 
 
 Running
@@ -171,8 +171,9 @@ follows (with comments on the right side):
     {call,nat,add,[1,2]}                 message
 
 
-To facilitate log rotation, Ernie will create a new access log file if the
-current log file is moved or deleted.
+Log lines are written when the request completes so they may appear out of
+order with respect to connection time. To facilitate log rotation, Ernie will
+create a new access log file if the current log file is moved or deleted.
 
 
 Native (Erlang) Handler
@@ -207,6 +208,7 @@ BERT-RPC clients.
 
 Using a Ruby module and Ernie.expose:
 
+    require 'rubygems'
     require 'ernie'
     
     module Ext
