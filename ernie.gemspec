@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ernie}
-  s.version = "2.0.0"
+  s.version = "2.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tom Preston-Werner"]
-  s.date = %q{2010-02-16}
+  s.date = %q{2010-02-24}
   s.default_executable = %q{ernie}
   s.email = %q{tom@mojombo.com}
   s.executables = ["ernie"]
@@ -33,6 +33,8 @@ Gem::Specification.new do |s|
      "elib/asset_pool_sup.erl",
      "elib/bert.erl",
      "elib/ernie.hrl",
+     "elib/ernie_access_logger.erl",
+     "elib/ernie_access_logger_sup.erl",
      "elib/ernie_admin.erl",
      "elib/ernie_config.erl",
      "elib/ernie_native.erl",
