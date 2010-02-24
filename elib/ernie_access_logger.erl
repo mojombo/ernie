@@ -158,7 +158,7 @@ time_tuple_to_iso_8601_date(TimeTuple) ->
   {{YY, MM, DD}, {H, M, S}} = calendar:now_to_local_time(TimeTuple),
   {_MegaSecs, _Secs, MicroSecs} = TimeTuple,
   Args = [YY, MM, DD, H, M, S, MicroSecs],
-  io_lib:fwrite("~4B-~2.10.0B-~2.10.0B ~2.10.0B:~2.10.0B:~2.10.0B.~-6.10.0B", Args).
+  io_lib:fwrite("~4B-~2.10.0B-~2.10.0BT~2.10.0B:~2.10.0B:~2.10.0B.~-6.10.0B", Args).
 
 time_difference_in_seconds(T1, T2) ->
   {_, _, MS1} = T1,
