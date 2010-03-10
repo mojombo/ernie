@@ -6,8 +6,10 @@ class Ernie
   class << self
     attr_accessor :mods, :current_mod, :log
     attr_accessor :auto_start
+    attr_accessor :virgin_procline
   end
 
+  self.virgin_procline = $0
   self.mods = {}
   self.current_mod = nil
   self.log = Logger.new(STDOUT)
@@ -117,6 +119,7 @@ class Ernie
   #
   # Loops forever
   def self.start
+    self.procline('starting')
     self.log.info("(#{Process.pid}) Starting")
     self.log.debug(self.mods.inspect)
 
@@ -126,6 +129,7 @@ class Ernie
     output.sync = true
 
     loop do
+      self.procline('waiting')
       iruby = self.read_berp(input)
       unless iruby
         puts "Could not read BERP length header. Ernie server may have gone away. Exiting now."
@@ -135,6 +139,7 @@ class Ernie
 
       if iruby.size == 4 && iruby[0] == :call
         mod, fun, args = iruby[1..3]
+        self.procline("#{mod}:#{fun}")
         self.log.info("-> " + iruby.inspect)
         begin
           res = self.dispatch(mod, fun, args)
@@ -154,6 +159,7 @@ class Ernie
         end
       elsif iruby.size == 4 && iruby[0] == :cast
         mod, fun, args = iruby[1..3]
+        self.procline("#{mod}:#{fun}")
         self.log.info("-> " + [:cast, mod, fun, args].inspect)
         begin
           self.dispatch(mod, fun, args)
@@ -162,6 +168,7 @@ class Ernie
         end
         write_berp(output, t[:noreply])
       else
+        self.procline("invalid request")
         self.log.error("-> " + iruby.inspect)
         oruby = t[:error, t[:server, 0, "Invalid request: #{iruby.inspect}"]]
         self.log.error("<- " + oruby.inspect)
@@ -169,6 +176,19 @@ class Ernie
       end
     end
   end
+
+  def self.procline(msg)
+    $0 = "ernie handler #{VERSION} - #{self.virgin_procline} - #{msg}"
+  end
+
+  def self.version
+    yml = YAML.load(File.read(File.join(File.dirname(__FILE__), *%w[.. VERSION.yml])))
+    "#{yml[:major]}.#{yml[:minor]}.#{yml[:patch]}"
+  rescue
+    'unknown'
+  end
+
+  VERSION = self.version
 end
 
 class Ernie::ServerError < StandardError; end
