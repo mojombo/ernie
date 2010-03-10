@@ -6,9 +6,10 @@ class Ernie
   class << self
     attr_accessor :mods, :current_mod, :log
     attr_accessor :auto_start
-    attr_accessor :virgin_procline
+    attr_accessor :count, :virgin_procline
   end
 
+  self.count = 0
   self.virgin_procline = $0
   self.mods = {}
   self.current_mod = nil
@@ -131,6 +132,8 @@ class Ernie
     loop do
       self.procline('waiting')
       iruby = self.read_berp(input)
+      self.count += 1
+
       unless iruby
         puts "Could not read BERP length header. Ernie server may have gone away. Exiting now."
         self.log.info("(#{Process.pid}) Could not read BERP length header. Ernie server may have gone away. Exiting now.")
@@ -178,7 +181,7 @@ class Ernie
   end
 
   def self.procline(msg)
-    $0 = "ernie handler #{VERSION} - #{self.virgin_procline} - #{msg}"
+    $0 = "ernie handler #{VERSION} (ruby) - #{self.virgin_procline} - [#{self.count}] #{msg}"
   end
 
   def self.version

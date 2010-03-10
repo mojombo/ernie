@@ -139,4 +139,17 @@ start_handlers(Assets, Count, Handler, Token) ->
   start_handlers(Assets2, Count - 1, Handler, Token).
 
 create_asset(Handler, Token) ->
-  {asset, port_wrapper:wrap_link(Handler), Token}.
+  Len = length(Handler),
+  case Len > 150 of
+    true -> Cmd = Handler;
+    false -> Cmd = lists:flatten(Handler ++ " --procline " ++ pad(150 - Len - 12))
+  end,
+  io:format("~p~n", [Cmd]),
+  {asset, port_wrapper:wrap_link(Cmd), Token}.
+
+pad(Size) ->
+  pad(Size, []).
+pad(0, Acc) ->
+  Acc;
+pad(Size, Acc) ->
+  pad(Size - 1, ["x" | Acc]).
