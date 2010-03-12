@@ -142,7 +142,7 @@ class Ernie
 
       if iruby.size == 4 && iruby[0] == :call
         mod, fun, args = iruby[1..3]
-        self.procline("#{mod}:#{fun}")
+        self.procline("#{mod}:#{fun}(#{args})")
         self.log.info("-> " + iruby.inspect)
         begin
           res = self.dispatch(mod, fun, args)
@@ -162,7 +162,7 @@ class Ernie
         end
       elsif iruby.size == 4 && iruby[0] == :cast
         mod, fun, args = iruby[1..3]
-        self.procline("#{mod}:#{fun}")
+        self.procline("#{mod}:#{fun}(#{args})")
         self.log.info("-> " + [:cast, mod, fun, args].inspect)
         begin
           self.dispatch(mod, fun, args)
@@ -181,7 +181,7 @@ class Ernie
   end
 
   def self.procline(msg)
-    $0 = "ernie handler #{VERSION} (ruby) - #{self.virgin_procline} - [#{self.count}] #{msg}"
+    $0 = "ernie handler #{VERSION} (ruby) - #{self.virgin_procline} - [#{self.count}] #{msg}"[0..159]
   end
 
   def self.version
