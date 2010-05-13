@@ -1,4 +1,5 @@
 -record(state, {lsock = undefined,      % the listen socket
+                listen = true,          % whether to listen for new connections
                 hq = queue:new(),       % high priority queue
                 lq = queue:new(),       % low priority queue
                 count = 0,              % total request count

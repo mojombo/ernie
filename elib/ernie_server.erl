@@ -127,10 +127,14 @@ try_listen(Port, Times) ->
   end.
 
 loop(LSock) ->
-  {ok, Sock} = gen_tcp:accept(LSock),
-  logger:debug("Accepted socket: ~p~n", [Sock]),
-  ernie_server:process(Sock),
-  loop(LSock).
+  case gen_tcp:accept(LSock) of
+    {error, Error} ->
+      logger:debug("Listen socket closed: ~p~n", [Error]);
+    {ok, Sock} ->
+      logger:debug("Accepted socket: ~p~n", [Sock]),
+      ernie_server:process(Sock),
+      loop(LSock)
+  end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Receive and process

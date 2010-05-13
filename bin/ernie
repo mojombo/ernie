@@ -33,6 +33,8 @@ Commands:
   <none>                Start an Ernie server.
   reload-handlers       Gracefully reload all of the the ruby handlers
                         and use the new code for all subsequent requests.
+  stats                 Print usage statistics.
+  halt                  Gracefully halt the server.
 
 Options:
 HELP
@@ -68,10 +70,11 @@ OptionParser.new do |opts|
 end.parse!
 
 if command = ARGV[0]
-  if !%w{reload-handlers stats}.include?(command)
+  if !%w{reload-handlers stats halt}.include?(command)
     puts "Invlalid command. Valid commands are:"
     puts "  reload-handlers"
     puts "  stats"
+    puts "  halt"
     exit(1)
   end
 

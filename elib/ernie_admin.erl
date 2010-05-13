@@ -8,6 +8,9 @@
 process(Sock, reload_handlers, _Args, State) ->
   spawn(fun() -> process_reload_assets(Sock, State) end),
   State;
+process(Sock, halt, _Args, State) ->
+  process_halt(Sock, State),
+  State#state{listen = false};
 process(Sock, stats, _Args, State) ->
   spawn(fun() -> process_stats(Sock, State) end),
   State;
@@ -28,6 +31,14 @@ reload({_Mod, native}) ->
   ok;
 reload({_Mod, Pid}) ->
   asset_pool:reload_assets(Pid).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Halt
+
+process_halt(Sock, State) ->
+  gen_tcp:close(State#state.lsock),
+  gen_tcp:send(Sock, term_to_binary({reply, <<"Halting.">>})),
+  ok = gen_tcp:close(Sock).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Stats
