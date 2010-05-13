@@ -1,3 +1,7 @@
+= 2.2.1 / 2010-05-13
+  * Minor Changes
+    * Increase TCP backlog from 5 to 128
+
 = 2.2.0 / 2010-03-12
   * Minor Additions
     * Set procline for external Ruby handlers
