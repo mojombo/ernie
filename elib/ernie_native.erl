@@ -20,6 +20,7 @@ process(ActionTerm, Request) ->
       gen_tcp:send(Sock, Data)
   end,
   ok = gen_tcp:close(Sock),
+  ernie_server:fin(),
   Log = Request#request.log,
   Log2 = Log#log{tdone = erlang:now()},
   Request2 = Request#request{log = Log2},

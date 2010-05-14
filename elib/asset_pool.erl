@@ -9,6 +9,7 @@
          terminate/2, code_change/3]).
 
 -record(state, {assets = undefined,
+                count = undefined,
                 handler = undefined,
                 token = undefined}).
 
@@ -48,7 +49,7 @@ init([Handler, Count]) ->
   Token = make_ref(),
   Assets = start_handlers(Count, Handler, Token),
   logger:debug("Assets = ~p~n", [Assets]),
-  {ok, #state{assets = Assets, handler = Handler, token = Token}}.
+  {ok, #state{assets = Assets, count = Count, handler = Handler, token = Token}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |

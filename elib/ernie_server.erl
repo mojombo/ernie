@@ -3,7 +3,7 @@
 -include_lib("ernie.hrl").
 
 %% api
--export([start_link/1, start/1, process/1, kick/0]).
+-export([start_link/1, start/1, process/1, kick/0, fin/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -24,6 +24,9 @@ process(Sock) ->
 
 kick() ->
   gen_server:cast({global, ?MODULE}, kick).
+
+fin() ->
+  gen_server:cast({global, ?MODULE}, fin).
 
 %%====================================================================
 %% gen_server callbacks
@@ -84,6 +87,15 @@ handle_cast(kick, State) ->
           {noreply, State}
       end
   end;
+handle_cast(fin, State) ->
+  Listen = State#state.listen,
+  Count = State#state.count,
+  ZCount = State#state.zcount + 1,
+  logger:debug("Fin; Listen = ~p (~p/~p)~n", [Listen, Count, ZCount]),
+  case Listen =:= false andalso ZCount =:= Count of
+    true -> halt();
+    false -> {noreply, State#state{zcount = ZCount}}
+  end;
 handle_cast(_Msg, State) -> {noreply, State}.
 
 handle_info(Msg, State) ->
@@ -119,6 +131,7 @@ try_listen(Port, Times) ->
   case Res of
     {ok, LSock} ->
       error_logger:info_msg("Listening on port ~p~n", [Port]),
+      % gen_tcp:controlling_process(LSock, ernie_server),
       {ok, LSock};
     {error, Reason} ->
       error_logger:info_msg("Could not listen on port ~p: ~p~n", [Port, Reason]),
@@ -128,8 +141,12 @@ try_listen(Port, Times) ->
 
 loop(LSock) ->
   case gen_tcp:accept(LSock) of
+    {error, closed} ->
+      logger:debug("Listen socket closed~n", []),
+      timer:sleep(infinity);
     {error, Error} ->
-      logger:debug("Listen socket closed: ~p~n", [Error]);
+      logger:debug("Connection accept error: ~p~n", [Error]),
+      loop(LSock);
     {ok, Sock} ->
       logger:debug("Accepted socket: ~p~n", [Sock]),
       ernie_server:process(Sock),
@@ -291,6 +308,7 @@ process_now(Pid, Request, Asset) ->
       ernie_access_logger:err(Request2, "External process error ~w: ~w", [AnyClass, AnyError])
   after
     asset_pool:return(Pid, Asset),
+    ernie_server:fin(),
     ernie_server:kick(),
     logger:debug("Returned asset ~p~n", [Asset]),
     gen_tcp:close(Request#request.sock),

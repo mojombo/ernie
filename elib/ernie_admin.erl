@@ -36,18 +36,23 @@ reload({_Mod, Pid}) ->
 % Halt
 
 process_halt(Sock, State) ->
-  gen_tcp:close(State#state.lsock),
   gen_tcp:send(Sock, term_to_binary({reply, <<"Halting.">>})),
-  ok = gen_tcp:close(Sock).
+  ok = gen_tcp:close(Sock),
+  gen_tcp:close(State#state.lsock),
+  case State#state.count =:= State#state.zcount of
+    true -> halt();
+    false -> ok
+  end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Stats
 
 process_stats(Sock, State) ->
   CountString = stat(count, State),
+  ZCountString = stat(zcount, State),
   IdleWorkersString = stat(idle, State),
   QueueLengthString = stat(queue, State),
-  StatString = list_to_binary([CountString, IdleWorkersString, QueueLengthString]),
+  StatString = list_to_binary([CountString, ZCountString, IdleWorkersString, QueueLengthString]),
   Data = term_to_binary({reply, StatString}),
   gen_tcp:send(Sock, Data),
   ok = gen_tcp:close(Sock).
@@ -55,6 +60,9 @@ process_stats(Sock, State) ->
 stat(count, State) ->
   Count = State#state.count,
   list_to_binary([<<"connections.total=">>, integer_to_list(Count), <<"\n">>]);
+stat(zcount, State) ->
+  ZCount = State#state.zcount,
+  list_to_binary([<<"connections.completed=">>, integer_to_list(ZCount), <<"\n">>]);
 stat(idle, State) ->
   IdleMap = lists:map((fun idle/1), State#state.map),
   list_to_binary(IdleMap);
