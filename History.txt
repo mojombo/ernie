@@ -1,3 +1,7 @@
+= 2.3.0 / 2010-05-17
+  * Minor Additions
+    * Add 'halt' command for gracefully shutting down
+
 = 2.2.1 / 2010-05-13
   * Minor Changes
     * Increase TCP backlog from 5 to 128
