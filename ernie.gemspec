@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ernie}
-  s.version = "2.2.1"
+  s.version = "2.3.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tom Preston-Werner"]
-  s.date = %q{2010-05-13}
+  s.date = %q{2010-05-17}
   s.default_executable = %q{ernie}
   s.description = %q{Ernie is an Erlang/Ruby hybrid BERT-RPC server implementation packaged as a gem.}
   s.email = %q{tom@mojombo.com}
