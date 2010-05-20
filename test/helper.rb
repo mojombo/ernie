@@ -2,7 +2,7 @@ require 'rubygems'
 require 'test/unit'
 require 'shoulda'
 
-ERNIE_ROOT = File.join(File.dirname(__FILE__), *%w[..])
+ERNIE_ROOT = File.expand_path(File.join(File.dirname(__FILE__), *%w[..]))
 
 $:.unshift(File.join(ERNIE_ROOT, 'lib'))
 

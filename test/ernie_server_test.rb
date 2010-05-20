@@ -5,19 +5,7 @@ PORT = 27118
 class ErnieServerTest < Test::Unit::TestCase
   context "An Ernie Server" do
     setup do
-      `#{ERNIE_ROOT}/bin/ernie -c #{ERNIE_ROOT}/test/sample/sample.cfg \
-                               -P /tmp/ernie.pid \
-                               -p #{PORT} \
-                               -d`
-      @svc = BERTRPC::Service.new('localhost', PORT)
-      loop do
-        begin
-          @svc.call.ext.zeronary
-          break
-        rescue Object => e
-          sleep 0.1
-        end
-      end
+      start_server
     end
 
     context "call" do
@@ -70,8 +58,38 @@ class ErnieServerTest < Test::Unit::TestCase
     end
 
     teardown do
-      pid = File.read('/tmp/ernie.pid')
-      `kill -9 #{pid}`
+      shutdown_server
     end
   end
+  
+  protected
+  
+  def start_server
+    Dir.chdir(ERNIE_ROOT)
+     `#{ERNIE_ROOT}/bin/ernie -c #{ERNIE_ROOT}/test/sample/sample.cfg \
+                              -P /tmp/ernie.pid \
+                              -p #{PORT} \
+                              -d`
+    Signal.trap("INT") do
+      puts "Shutting Down"
+      shutdown_server
+      exit
+    end
+    
+     @svc = BERTRPC::Service.new('localhost', PORT)
+     loop do
+       begin
+         @svc.call.ext.zeronary
+         break
+       rescue Object => e
+         sleep 0.1
+       end
+     end
+  end
+  
+  def shutdown_server
+    pid = File.read('/tmp/ernie.pid')
+    `kill -9 #{pid}`
+  end
+  
 end
