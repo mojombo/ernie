@@ -59,6 +59,8 @@ Running
         -a, --access-log LOGFILE         Access log file
         -d, --detached                   Run as a daemon.
         -P, --pidfile PIDFILE            Location to write pid file.
+        --name NAME                      Erlang process name.
+        --sname SNAME                    Erlang short process name.
 
     Commands:
       <none>                Start an Ernie server.

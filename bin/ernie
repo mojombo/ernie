@@ -64,8 +64,12 @@ OptionParser.new do |opts|
     options[:detached] = true
   end
 
-  opts.on("--name NAME", "Proccess name") do |x|
+  opts.on("--name NAME", "Erlang proccess name") do |x|
     options[:name] = x
+  end
+
+  opts.on("--sname NAME", "Erlang short proccess name") do |x|
+    options[:sname] = x
   end
 
   opts.on("-P", "--pidfile PIDFILE", "Location to write pid file.") do |x|
@@ -100,9 +104,11 @@ else
   detached = options[:detached] ? '-detached' : ''
   access_log = options[:access_log] ? "-ernie_server_app access_log '\"#{options[:access_log]}\"'" : ''
   name = options[:name] ? "-name #{options[:name]}" : ''
+  sname = options[:sname] ? "-sname #{options[:sname]}" : ''
 
   cmd = %Q{erl -boot start_sasl \
                #{name} \
+               #{sname} \
                #{detached} \
                +Bc \
                +K true \
