@@ -18,19 +18,19 @@
 %%====================================================================
 
 start_link(Args) ->
-  gen_server:start_link({global, ?MODULE}, ?MODULE, Args, []).
+  gen_server:start_link({global, {node(),?MODULE}}, ?MODULE, Args, []).
 
 start(Args) ->
-  gen_server:start({global, ?MODULE}, ?MODULE, Args, []).
+  gen_server:start({global, {node(),?MODULE}}, ?MODULE, Args, []).
 
 acc(Request) ->
-  gen_server:cast({global, ?MODULE}, {acc, Request}).
+  gen_server:cast({global, {node(),?MODULE}}, {acc, Request}).
 
 err(Request, Msg, Args) ->
-  gen_server:cast({global, ?MODULE}, {err, Request, Msg, Args}).
+  gen_server:cast({global, {node(),?MODULE}}, {err, Request, Msg, Args}).
 
 reopen() ->
-  gen_server:cast({global, ?MODULE}, reopen).
+  gen_server:cast({global, {node(),?MODULE}}, reopen).
 
 %%====================================================================
 %% gen_server callbacks

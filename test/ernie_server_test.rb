@@ -107,6 +107,9 @@ class ErnieServerTest < Test::Unit::TestCase
   context "Two Ernie Servers" do
     setup do
       start_servers(2)
+      @servers.each do |svc|
+        svc.cast.intTest.connect_nodes
+      end
     end
     
     context "call" do
@@ -146,6 +149,12 @@ class ErnieServerTest < Test::Unit::TestCase
         end
       end
 
+      should "make joined erlang nodes possible" do
+        assert_equal nil, @servers.first.cast.intTest.set_state(7)
+        sleep 0.25
+        assert_equal 7, @servers.last.call.intTest.get_state
+      end
+
     end
 
     teardown do
@@ -172,6 +181,7 @@ class ErnieServerTest < Test::Unit::TestCase
       `#{ERNIE_ROOT}/bin/ernie -c #{ERNIE_ROOT}/test/sample/sample.cfg \
                               -P /tmp/ernie#{@servers.size}.pid \
                               -p #{PORT + @servers.size} \
+                              --name ernie#{@servers.size}@127.0.0.1 \
                               -d`
     
       @servers << BERTRPC::Service.new('localhost', PORT + @servers.size)

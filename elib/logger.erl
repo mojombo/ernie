@@ -15,28 +15,28 @@
 %%====================================================================
 
 start_link(Args) ->
-  gen_server:start_link({global, ?MODULE}, ?MODULE, Args, []).
+  gen_server:start_link({global, {node(),?MODULE}}, ?MODULE, Args, []).
 
 start(Args) ->
-  gen_server:start({global, ?MODULE}, ?MODULE, Args, []).
+  gen_server:start({global, {node(),?MODULE}}, ?MODULE, Args, []).
 
 set_log_level(Level) ->
-  gen_server:call({global, ?MODULE}, {set_log_level, Level}).
+  gen_server:call({global, {node(),?MODULE}}, {set_log_level, Level}).
 
 debug(Msg, Args) ->
-  gen_server:cast({global, ?MODULE}, {debug, Msg, Args}).
+  gen_server:cast({global, {node(),?MODULE}}, {debug, Msg, Args}).
 
 info(Msg, Args) ->
-  gen_server:cast({global, ?MODULE}, {info, Msg, Args}).
+  gen_server:cast({global, {node(),?MODULE}}, {info, Msg, Args}).
 
 warn(Msg, Args) ->
-  gen_server:cast({global, ?MODULE}, {warn, Msg, Args}).
+  gen_server:cast({global, {node(),?MODULE}}, {warn, Msg, Args}).
 
 error(Msg, Args) ->
-  gen_server:cast({global, ?MODULE}, {error, Msg, Args}).
+  gen_server:cast({global, {node(),?MODULE}}, {error, Msg, Args}).
 
 fatal(Msg, Args) ->
-  gen_server:cast({global, ?MODULE}, {fatal, Msg, Args}).
+  gen_server:cast({global, {node(),?MODULE}}, {fatal, Msg, Args}).
 
 %%====================================================================
 %% gen_server callbacks
