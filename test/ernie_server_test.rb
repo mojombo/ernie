@@ -11,22 +11,27 @@ class ErnieServerTest < Test::Unit::TestCase
     context "call" do
       should "handle zeronary" do
         assert_equal :foo, @svc.call.ext.zeronary
+        assert_equal :foo, @svc.call.intTest.zeronary
       end
 
       should "handle unary" do
         assert_equal 5, @svc.call.ext.unary(5)
+        assert_equal 5, @svc.call.intTest.unary(5)
       end
 
       should "handle binary" do
         assert_equal 7, @svc.call.ext.binary(5, 2)
+        assert_equal 7, @svc.call.intTest.binary(5, 2)
       end
 
       should "handle ternary" do
         assert_equal 10, @svc.call.ext.ternary(5, 2, 3)
+        assert_equal 10, @svc.call.intTest.ternary(5, 2, 3)
       end
 
       should "handle massive binaries" do
         assert_equal 8 * 1024 * 1024, @svc.call.ext.big(8 * 1024 * 1024).size
+        assert_equal 8 * 1024 * 1024, @svc.call.intTest.big(8 * 1024 * 1024).size
       end
 
       should "get an error on missing module" do
@@ -66,10 +71,11 @@ class ErnieServerTest < Test::Unit::TestCase
   
   def start_server
     Dir.chdir(ERNIE_ROOT)
-     `#{ERNIE_ROOT}/bin/ernie -c #{ERNIE_ROOT}/test/sample/sample.cfg \
-                              -P /tmp/ernie.pid \
-                              -p #{PORT} \
-                              -d`
+    `erlc #{ERNIE_ROOT}/test/sample/intTest.erl`
+    `#{ERNIE_ROOT}/bin/ernie -c #{ERNIE_ROOT}/test/sample/sample.cfg \
+                            -P /tmp/ernie.pid \
+                            -p #{PORT} \
+                            -d`
     Signal.trap("INT") do
       puts "Shutting Down"
       shutdown_server
@@ -90,6 +96,7 @@ class ErnieServerTest < Test::Unit::TestCase
   def shutdown_server
     pid = File.read('/tmp/ernie.pid')
     `kill -9 #{pid}`
+    `rm intTest.beam`
   end
   
 end
