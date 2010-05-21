@@ -58,6 +58,8 @@ class ErnieServerTest < Test::Unit::TestCase
           fail "Expected a BERTRPC::ServerError"
         rescue BERTRPC::ServerError => e
           assert_equal "No such module 'failboat'", e.message
+        else
+          assert false, 'failed to raise on missing module'
         end
       end
 
@@ -67,6 +69,17 @@ class ErnieServerTest < Test::Unit::TestCase
           fail "Expected a BERTRPC::ServerError"
         rescue BERTRPC::ServerError => e
           assert_equal "No such function 'ext:mcfail'", e.message
+        else
+          assert false, 'failed to raise on missing function'
+        end
+
+        begin
+          svc.call.intTest.mcfail(:fail)
+          fail "Expected a BERTRPC::ServerError"
+        rescue BERTRPC::ServerError => e
+          assert_equal "No such function 'intTest:mcfail'", e.message
+        else
+          assert false, 'failed to raise on missing function'
         end
       end
     end
