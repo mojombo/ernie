@@ -77,6 +77,12 @@ class ErnieServerTest < Test::Unit::TestCase
         assert_equal nil, svc.cast.ext.set_state(7)
         assert Time.now - t0 < 1
         assert_equal 7, svc.call.ext.get_state
+
+        t0 = Time.now
+        assert_equal nil, svc.cast.intTest.set_state(7)
+        assert Time.now - t0 < 1
+        sleep 0.25
+        assert_equal 7, svc.call.intTest.get_state
       end
     end
 
