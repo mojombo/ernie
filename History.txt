@@ -1,3 +1,7 @@
+= 2.4.0 / 2010-05-21
+  * Minor Additions
+    * Add -E cli option for setting extra Erlang VM options
+
 = 2.3.0 / 2010-05-17
   * Minor Additions
     * Add 'halt' command for gracefully shutting down
