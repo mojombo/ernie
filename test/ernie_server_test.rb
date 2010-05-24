@@ -51,6 +51,19 @@ class ErnieServerTest < Test::Unit::TestCase
         assert_equal 8 * 1024 * 1024, svc.call.ext.big(8 * 1024 * 1024).size
         assert_equal 8 * 1024 * 1024, svc.call.intTest.big(8 * 1024 * 1024).size
       end
+      
+      should "not block on internal modules" do
+        time = Time.now
+        svc.call.intTest.sleep(1000)
+        assert(Time.now >= time + 1)
+        
+        time = Time.now
+        svc.cast.intTest.sleep(1000)
+        svc.cast.intTest.sleep(1000)
+        svc.cast.intTest.sleep(1000)
+        svc.call.intTest.zeronary
+        assert(Time.now < time + 1)
+      end
 
       should "get an error on missing module" do
         begin
