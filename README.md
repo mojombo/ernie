@@ -56,11 +56,12 @@ Running
         -c, --config CONFIG              Config file.
         -p, --port PORT                  Port.
         -l, --log-level                  Log level (0-4).
-        -a, --access-log LOGFILE         Access log file
+        -a, --access-log LOGFILE         Access log file.
         -d, --detached                   Run as a daemon.
         -P, --pidfile PIDFILE            Location to write pid file.
         --name NAME                      Erlang process name.
         --sname SNAME                    Erlang short process name.
+        -E, --erlang ERLANG_OPTIONS      Options passed to Erlang VM.
 
     Commands:
       <none>                Start an Ernie server.
@@ -76,6 +77,10 @@ Running
       ernie reload-handlers -p 9999
         Reload the handlers for the ernie server currently running on
         port 9999.
+
+      ernie -c example.cfg -E '-run mymodule'
+        Start the ernie server with an additional erlang module called
+        'mymodule'
 
 
 Configuration File

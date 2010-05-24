@@ -75,6 +75,10 @@ OptionParser.new do |opts|
   opts.on("-P", "--pidfile PIDFILE", "Location to write pid file.") do |x|
     options[:pidfile] = x
   end
+
+  opts.on("-E", "--erlang ERLANG_OPTIONS", "Additional parameters to Erlang VM") do |x|
+    options[:erl_options] = x
+  end
 end.parse!
 
 if command = ARGV[0]
@@ -105,6 +109,7 @@ else
   access_log = options[:access_log] ? "-ernie_server_app access_log '\"#{options[:access_log]}\"'" : ''
   name = options[:name] ? "-name #{options[:name]}" : ''
   sname = options[:sname] ? "-sname #{options[:sname]}" : ''
+  erl_options = options[:erl_options]
 
   cmd = %Q{erl -boot start_sasl \
                #{name} \
@@ -119,7 +124,8 @@ else
                -ernie_server_app port #{port} \
                -ernie_server_app config '"#{config}"' \
                -ernie_server_app log_level #{log_level} \
-               -run ernie_server_app boot}.squeeze(' ')
+               -run ernie_server_app boot \
+               #{erl_options}}.squeeze(' ')  
   puts cmd
   STDOUT.flush
   exec(cmd)
