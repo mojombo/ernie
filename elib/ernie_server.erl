@@ -14,19 +14,19 @@
 %%====================================================================
 
 start_link(Args) ->
-  gen_server:start_link({global, {node(),?MODULE}}, ?MODULE, Args, []).
+  gen_server:start_link({local, ?MODULE}, ?MODULE, Args, []).
 
 start(Args) ->
-  gen_server:start({global, {node(),?MODULE}}, ?MODULE, Args, []).
+  gen_server:start({local, ?MODULE}, ?MODULE, Args, []).
 
 process(Sock) ->
-  gen_server:cast({global, {node(),?MODULE}}, {process, Sock}).
+  gen_server:cast(?MODULE, {process, Sock}).
 
 kick() ->
-  gen_server:cast({global, {node(),?MODULE}}, kick).
+  gen_server:cast(?MODULE, kick).
 
 fin() ->
-  gen_server:cast({global, {node(),?MODULE}}, fin).
+  gen_server:cast(?MODULE, fin).
 
 %%====================================================================
 %% gen_server callbacks
