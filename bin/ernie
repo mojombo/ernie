@@ -14,14 +14,10 @@ def code_paths
   DEFAULT_ERLANG_CODEPATHS.map {|n| "-pz #{rel(n)}" }.join(" ") + " \\"
 end
 
-def version
-  yml = YAML.load(File.read(File.join(File.dirname(__FILE__), *%w[.. VERSION.yml])))
-  "#{yml[:major]}.#{yml[:minor]}.#{yml[:patch]}"
-end
-
 require 'optparse'
 require 'pp'
 require 'yaml'
+require 'ernie'
 
 help = <<HELP
 Ernie is an Erlang/Ruby BERT-RPC Server.
@@ -42,7 +38,7 @@ HELP
 options = {}
 OptionParser.new do |opts|
   opts.banner = help
-  opts.version = version
+  opts.version = Ernie::VERSION
 
   opts.on("-c CONFIG", "--config CONFIG", "Config file") do |x|
     options[:config] = x

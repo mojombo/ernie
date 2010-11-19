@@ -3,6 +3,8 @@ require 'bert'
 require 'logger'
 
 class Ernie
+  VERSION = '2.4.0'
+
   class << self
     attr_accessor :mods, :current_mod, :log
     attr_accessor :auto_start
@@ -185,13 +187,8 @@ class Ernie
   end
 
   def self.version
-    yml = YAML.load(File.read(File.join(File.dirname(__FILE__), *%w[.. VERSION.yml])))
-    "#{yml[:major]}.#{yml[:minor]}.#{yml[:patch]}"
-  rescue
-    'unknown'
+    VERSION
   end
-
-  VERSION = self.version
 end
 
 class Ernie::ServerError < StandardError; end
