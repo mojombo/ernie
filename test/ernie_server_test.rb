@@ -8,7 +8,7 @@ class ErnieServerTest < Test::Unit::TestCase
   def setup
     @servers ||= []
     Dir.chdir(ERNIE_ROOT)
-    `erlc #{ERNIE_ROOT}/test/sample/intTest.erl`
+    `erlc -o test/sample #{ERNIE_ROOT}/test/sample/intTest.erl`
     Signal.trap("INT") do
       puts "Shutting Down"
       shutdown_servers
@@ -18,7 +18,7 @@ class ErnieServerTest < Test::Unit::TestCase
   end
   
   def teardown
-    `rm intTest.beam`
+    `rm test/sample/intTest.beam`
   end
 
   context "An Ernie Server" do
