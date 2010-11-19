@@ -1,4 +1,4 @@
-= HEAD
+= 2.5.0 / 2010-11-19
   * Major Enhancements
     * Enable multi-node mode (#11)
   * Bug Fixes

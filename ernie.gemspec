@@ -4,7 +4,7 @@ Gem::Specification.new do |s|
   s.rubygems_version = '1.3.6'
 
   s.name              = 'ernie'
-  s.version           = '2.4.0'
+  s.version           = '2.5.0'
   s.date              = '2010-11-19'
   s.rubyforge_project = 'ernie'
 
@@ -36,7 +36,6 @@ Gem::Specification.new do |s|
     LICENSE
     README.md
     Rakefile
-    VERSION.yml
     bin/ernie
     contrib/ebench.erl
     ebin/ernie_server_app.app
@@ -64,8 +63,6 @@ Gem::Specification.new do |s|
     ext/Makefile
     ext/extconf.rb
     lib/ernie.rb
-    test/ernie_server_test.rb
-    test/ernie_test.rb
     test/helper.rb
     test/load.rb
     test/sample/ext.rb

@@ -3,7 +3,7 @@ require 'bert'
 require 'logger'
 
 class Ernie
-  VERSION = '2.4.0'
+  VERSION = '2.5.0'
 
   class << self
     attr_accessor :mods, :current_mod, :log
