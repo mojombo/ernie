@@ -1,3 +1,9 @@
+= HEAD
+  * Major Enhancements
+    * Enable multi-node mode (#11)
+  * Bug Fixes
+    * Properly determine whether function or module is missing.
+
 = 2.4.0 / 2010-05-21
   * Minor Additions
     * Add -E cli option for setting extra Erlang VM options

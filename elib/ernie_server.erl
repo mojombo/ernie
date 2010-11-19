@@ -200,14 +200,26 @@ process_request(Request, Priority, Q2, State) ->
   ActionTerm = bert:decode(Request#request.action),
   {_Type, Mod, _Fun, _Args} = ActionTerm,
   Specs = lists:filter(fun({X, _Id}) -> Mod =:= X end, State#state.map),
-  process_module(ActionTerm, Specs, Request, Priority, Q2, State).
+  case Specs of
+    [] -> no_module(Mod, Request, Priority, Q2, State);
+    _Else -> process_module(ActionTerm, Specs, Request, Priority, Q2, State)
+  end.
 
-process_module(ActionTerm, [], Request, Priority, Q2, State) ->
-  {_Type, Mod, _Fun, _Args} = ActionTerm,
+no_module(Mod, Request, Priority, Q2, State) ->
   logger:debug("No such module ~p~n", [Mod]),
   Sock = Request#request.sock,
   Class = <<"ServerError">>,
   Message = list_to_binary(io_lib:format("No such module '~p'", [Mod])),
+  gen_tcp:send(Sock, term_to_binary({error, [server, 0, Class, Message, []]})),
+  ok = gen_tcp:close(Sock),
+  finish(Priority, Q2, State).
+
+process_module(ActionTerm, [], Request, Priority, Q2, State) ->
+  {_Type, Mod, Fun, _Args} = ActionTerm,
+  logger:debug("No such function ~p:~p~n", [Mod, Fun]),
+  Sock = Request#request.sock,
+  Class = <<"ServerError">>,
+  Message = list_to_binary(io_lib:format("No such function '~p:~p'", [Mod, Fun])),
   gen_tcp:send(Sock, term_to_binary({error, [server, 0, Class, Message, []]})),
   ok = gen_tcp:close(Sock),
   finish(Priority, Q2, State);
