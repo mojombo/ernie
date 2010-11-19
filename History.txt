@@ -3,6 +3,7 @@
     * Enable multi-node mode (#11)
   * Bug Fixes
     * Properly determine whether function or module is missing.
+    * Spawn a process for receive_term to keep acceptor non-blocking.
 
 = 2.4.0 / 2010-05-21
   * Minor Additions

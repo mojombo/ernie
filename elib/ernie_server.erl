@@ -3,7 +3,7 @@
 -include_lib("ernie.hrl").
 
 %% api
--export([start_link/1, start/1, process/1, kick/0, fin/0]).
+-export([start_link/1, start/1, process/1, enqueue_request/1, kick/0, fin/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -21,6 +21,9 @@ start(Args) ->
 
 process(Sock) ->
   gen_server:cast(?MODULE, {process, Sock}).
+
+enqueue_request(Request) ->
+  gen_server:call(?MODULE, {enqueue_request, Request}).
 
 kick() ->
   gen_server:cast(?MODULE, kick).
@@ -57,6 +60,16 @@ init([Port, Configs]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
+handle_call({enqueue_request, Request}, _From, State) ->
+  case Request#request.priority of
+    high ->
+      Hq2 = queue:in(Request, State#state.hq),
+      Lq2 = State#state.lq;
+    low ->
+      Hq2 = State#state.hq,
+      Lq2 = queue:in(Request, State#state.lq)
+  end,
+  {reply, ok, State#state{hq = Hq2, lq = Lq2}};
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
 
@@ -71,8 +84,9 @@ handle_cast({process, Sock}, State) ->
              lq = queue:len(State#state.lq),
              taccept = erlang:now()},
   Request = #request{sock = Sock, log = Log},
-  State2 = receive_term(Request, State),
-  {noreply, State2};
+  spawn(fun() -> receive_term(Request, State) end),
+  logger:debug("Spawned receiver~n", []),
+  {noreply, State};
 handle_cast(kick, State) ->
   case queue:out(State#state.hq) of
     {{value, Request}, Hq2} ->
@@ -175,20 +189,11 @@ receive_term(Request, State) ->
         _Any ->
           Request2 = Request#request{action = BinaryTerm},
           close_if_cast(Term, Request2),
-          case Request2#request.priority of
-            high ->
-              Hq2 = queue:in(Request2, State#state.hq),
-              Lq2 = State#state.lq;
-            low ->
-              Hq2 = State#state.hq,
-              Lq2 = queue:in(Request2, State#state.lq)
-          end,
-          ernie_server:kick(),
-          State#state{hq = Hq2, lq = Lq2}
+          ernie_server:enqueue_request(Request2),
+          ernie_server:kick()
       end;
     {error, closed} ->
-      ok = gen_tcp:close(Sock),
-      State
+      ok = gen_tcp:close(Sock)
   end.
 
 process_info(Request, priority, [Priority]) ->
