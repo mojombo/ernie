@@ -1,4 +1,4 @@
-= HEAD
+= 2.5.1 / 2010-11-22
   * Bug Fixes
     * Prevent ernie from trying to start in ernie bin
 
