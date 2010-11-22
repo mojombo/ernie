@@ -19,6 +19,8 @@ require 'pp'
 require 'yaml'
 require 'ernie'
 
+Ernie.auto_start = false
+
 help = <<HELP
 Ernie is an Erlang/Ruby BERT-RPC Server.
 
