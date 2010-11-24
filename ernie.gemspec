@@ -4,8 +4,8 @@ Gem::Specification.new do |s|
   s.rubygems_version = '1.3.6'
 
   s.name              = 'ernie'
-  s.version           = '2.5.1'
-  s.date              = '2010-11-22'
+  s.version           = '2.5.2'
+  s.date              = '2010-11-23'
   s.rubyforge_project = 'ernie'
 
   s.summary     = "Ernie is a BERT-RPC server implementation."

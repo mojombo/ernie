@@ -1,4 +1,4 @@
-= HEAD
+= 2.5.2 / 2010-11-23
   * Bug Fixes
     * Don't do extra logging work unless necessary
 
