@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
 
   s.require_paths = %w[lib]
 
-  s.extensions = ["ext/extconf.rb", "ext/extconf.rb"]
+  s.extensions = ["ext/extconf.rb"]
 
   s.executables = ["ernie"]
   s.default_executable = 'ernie'
