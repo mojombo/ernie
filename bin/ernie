@@ -123,7 +123,7 @@ else
                -ernie_server_app config '"#{config}"' \
                -ernie_server_app log_level #{log_level} \
                -run ernie_server_app boot \
-               #{erl_options}}.squeeze(' ')  
+               #{erl_options}}.squeeze(' ')
   puts cmd
   STDOUT.flush
   exec(cmd)

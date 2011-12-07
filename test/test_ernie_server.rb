@@ -16,7 +16,7 @@ class ErnieServerTest < Test::Unit::TestCase
       exit
     end
   end
-  
+
   def teardown
     `rm test/sample/intTest.beam`
   end
@@ -51,12 +51,12 @@ class ErnieServerTest < Test::Unit::TestCase
         assert_equal 8 * 1024 * 1024, svc.call.ext.big(8 * 1024 * 1024).size
         assert_equal 8 * 1024 * 1024, svc.call.intTest.big(8 * 1024 * 1024).size
       end
-      
+
       should "not block on internal modules" do
         time = Time.now
         svc.call.intTest.sleep(1000)
         assert(Time.now >= time + 1)
-        
+
         time = Time.now
         svc.cast.intTest.sleep(1000)
         svc.cast.intTest.sleep(1000)
@@ -116,7 +116,7 @@ class ErnieServerTest < Test::Unit::TestCase
       shutdown_server
     end
   end
-  
+
   context "Two Ernie Servers" do
     setup do
       start_servers(2)
@@ -124,7 +124,7 @@ class ErnieServerTest < Test::Unit::TestCase
         svc.cast.intTest.connect_nodes
       end
     end
-    
+
     context "call" do
 
       should "handle zeronary" do
@@ -174,21 +174,21 @@ class ErnieServerTest < Test::Unit::TestCase
       shutdown_servers(2)
     end
   end
-  
+
   protected
-  
+
   def svc
     @servers[rand(@servers.size-1)]
   end
-  
+
   def start_server
     start_servers(1)
   end
-  
+
   def shutdown_server
     shutdown_servers(1)
   end
-  
+
   def start_servers(n = 1)
     n.times do
       `#{ERNIE_ROOT}/bin/ernie -c #{ERNIE_ROOT}/test/sample/sample.cfg \
@@ -196,7 +196,7 @@ class ErnieServerTest < Test::Unit::TestCase
                               -p #{PORT + @servers.size} \
                               --name ernie#{@servers.size}@127.0.0.1 \
                               -d`
-    
+
       @servers << BERTRPC::Service.new('localhost', PORT + @servers.size)
       loop do
         begin
@@ -208,7 +208,7 @@ class ErnieServerTest < Test::Unit::TestCase
       end
     end
   end
-  
+
   def shutdown_servers(n = nil)
     start = @servers.size - 1
     last = start - (n || start)
@@ -217,5 +217,5 @@ class ErnieServerTest < Test::Unit::TestCase
       `kill -9 #{pid}`
     end
   end
-  
+
 end
