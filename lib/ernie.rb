@@ -132,56 +132,69 @@ class Ernie
     output.sync = true
 
     loop do
-      self.procline('waiting')
-      iruby = self.read_berp(input)
-      self.count += 1
+      process(input, output)
+    end
+  end
 
-      unless iruby
-        puts "Could not read BERP length header. Ernie server may have gone away. Exiting now."
-        if self.log.level <= Logger::INFO
-          self.log.info("(#{Process.pid}) Could not read BERP length header. Ernie server may have gone away. Exiting now.")
-        end
-        exit!
+  # Processes a single BertRPC command.
+  #
+  #   input  - The IO to #read command BERP from.
+  #   output - The IO to #write reply BERP to.
+  #
+  # Returns a [iruby, oruby] tuple of incoming and outgoing BERPs processed.
+  def self.process(input, output)
+    self.procline('waiting')
+    iruby = self.read_berp(input)
+    self.count += 1
+
+    unless iruby
+      puts "Could not read BERP length header. Ernie server may have gone away. Exiting now."
+      if self.log.level <= Logger::INFO
+        self.log.info("(#{Process.pid}) Could not read BERP length header. Ernie server may have gone away. Exiting now.")
       end
+      exit!
+    end
 
-      if iruby.size == 4 && iruby[0] == :call
-        mod, fun, args = iruby[1..3]
-        self.procline("#{mod}:#{fun}(#{args})")
-        self.log.info("-> " + iruby.inspect) if self.log.level <= Logger::INFO
-        begin
-          res = self.dispatch(mod, fun, args)
-          oruby = t[:reply, res]
-          self.log.debug("<- " + oruby.inspect) if self.log.level <= Logger::DEBUG
-          write_berp(output, oruby)
-        rescue ServerError => e
-          oruby = t[:error, t[:server, 0, e.class.to_s, e.message, e.backtrace]]
-          self.log.error("<- " + oruby.inspect) if self.log.level <= Logger::ERROR
-          self.log.error(e.backtrace.join("\n")) if self.log.level <= Logger::ERROR
-          write_berp(output, oruby)
-        rescue Object => e
-          oruby = t[:error, t[:user, 0, e.class.to_s, e.message, e.backtrace]]
-          self.log.error("<- " + oruby.inspect) if self.log.level <= Logger::ERROR
-          self.log.error(e.backtrace.join("\n")) if self.log.level <= Logger::ERROR
-          write_berp(output, oruby)
-        end
-      elsif iruby.size == 4 && iruby[0] == :cast
-        mod, fun, args = iruby[1..3]
-        self.procline("#{mod}:#{fun}(#{args})")
-        self.log.info("-> " + [:cast, mod, fun, args].inspect) if self.log.level <= Logger::INFO
-        begin
-          self.dispatch(mod, fun, args)
-        rescue Object => e
-          # ignore
-        end
-        write_berp(output, t[:noreply])
-      else
-        self.procline("invalid request")
-        self.log.error("-> " + iruby.inspect) if self.log.level <= Logger::ERROR
-        oruby = t[:error, t[:server, 0, "Invalid request: #{iruby.inspect}"]]
+    if iruby.size == 4 && iruby[0] == :call
+      mod, fun, args = iruby[1..3]
+      self.procline("#{mod}:#{fun}(#{args})")
+      self.log.info("-> " + iruby.inspect) if self.log.level <= Logger::INFO
+      begin
+        res = self.dispatch(mod, fun, args)
+        oruby = t[:reply, res]
+        self.log.debug("<- " + oruby.inspect) if self.log.level <= Logger::DEBUG
+        write_berp(output, oruby)
+      rescue ServerError => e
+        oruby = t[:error, t[:server, 0, e.class.to_s, e.message, e.backtrace]]
         self.log.error("<- " + oruby.inspect) if self.log.level <= Logger::ERROR
+        self.log.error(e.backtrace.join("\n")) if self.log.level <= Logger::ERROR
+        write_berp(output, oruby)
+      rescue Object => e
+        oruby = t[:error, t[:user, 0, e.class.to_s, e.message, e.backtrace]]
+        self.log.error("<- " + oruby.inspect) if self.log.level <= Logger::ERROR
+        self.log.error(e.backtrace.join("\n")) if self.log.level <= Logger::ERROR
         write_berp(output, oruby)
       end
+    elsif iruby.size == 4 && iruby[0] == :cast
+      mod, fun, args = iruby[1..3]
+      self.procline("#{mod}:#{fun}(#{args})")
+      self.log.info("-> " + [:cast, mod, fun, args].inspect) if self.log.level <= Logger::INFO
+      begin
+        self.dispatch(mod, fun, args)
+      rescue Object => e
+        # ignore
+      end
+      oruby = t[:noreply]
+      write_berp(output, oruby)
+    else
+      self.procline("invalid request")
+      self.log.error("-> " + iruby.inspect) if self.log.level <= Logger::ERROR
+      oruby = t[:error, t[:server, 0, "Invalid request: #{iruby.inspect}"]]
+      self.log.error("<- " + oruby.inspect) if self.log.level <= Logger::ERROR
+      write_berp(output, oruby)
     end
+
+    [iruby, oruby]
   end
 
   def self.procline(msg)
