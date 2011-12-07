@@ -81,7 +81,7 @@ end.parse!
 
 if command = ARGV[0]
   if !%w{reload-handlers stats halt}.include?(command)
-    puts "Invlalid command. Valid commands are:"
+    puts "Invalid command. Valid commands are:"
     puts "  reload-handlers"
     puts "  stats"
     puts "  halt"
